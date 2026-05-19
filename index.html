@@ -1686,6 +1686,7 @@ function openAccountMenu() {
       '<div class="provider">' + escHtml(user.provider || 'local') +
         (user.rating ? ' · Rating ' + user.rating : '') + '</div>' +
     '</div>' +
+    '<button class="acct-menu-item" id="acct-send-to-clock" style="background:#fff8e1;font-weight:bold;color:#6a4f00;">📋 Copy to Chess Clock</button>' +
     '<button class="acct-menu-item" id="acct-mysignups">My sign-ups (' + signupCount + ')</button>' +
     '<button class="acct-menu-item" id="acct-linked">Linked accounts (' + linkedCount + '/3)</button>' +
     '<button class="acct-menu-item" id="acct-settings">Account settings</button>' +
@@ -1700,6 +1701,24 @@ function openAccountMenu() {
   document.getElementById('acct-linked').addEventListener('click', () => {
     closeAccountMenu();
     openLinkedAccounts();
+  });
+  document.getElementById('acct-send-to-clock').addEventListener('click', async () => {
+    const user = getCurrentUser();
+    if (!user) return;
+    // Build a self-contained auth token: prefix + base64 of user JSON
+    const token = 'CHESSCLOCK_AUTH:' + btoa(unescape(encodeURIComponent(JSON.stringify(user))));
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(token);
+        alert('✓ Sign-in token copied to clipboard.\n\nNow open the Chess Clock app → Settings → Account → tap "Paste sign-in from browser".');
+      } else {
+        // Fallback: show in a prompt for manual copy
+        prompt('Copy this token, then paste it in the Chess Clock app:', token);
+      }
+    } catch(e) {
+      prompt('Copy this token, then paste it in the Chess Clock app:', token);
+    }
+    closeAccountMenu();
   });
   document.getElementById('acct-settings').addEventListener('click', () => {
     closeAccountMenu();
