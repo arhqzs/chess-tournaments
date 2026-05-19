@@ -1,0 +1,2868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChessOTB — Find OTB Chess Tournaments Near You</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: #f5f3ef;
+  color: #1a1a1a;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ──────────────────────────────────────── */
+header {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  color: #fff;
+  padding: 20px 0;
+  border-bottom: 4px solid #c8a430;
+}
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.brand-mark {
+  font-size: 32px;
+  color: #c8a430;
+}
+.brand-name {
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: -0.5px;
+}
+.brand-tag {
+  font-size: 13px;
+  color: #aaa;
+  margin-left: 6px;
+}
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.search-wrap {
+  position: relative;
+}
+.search-wrap::before {
+  content: "🔍";
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+#search {
+  padding: 9px 14px 9px 32px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background: #1f1f1f;
+  color: #fff;
+  font-size: 14px;
+  width: 240px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+#search:focus { border-color: #c8a430; }
+#search::placeholder { color: #888; }
+.btn {
+  background: #c8a430;
+  color: #1a1a1a;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, transform 0.05s;
+}
+.btn:hover { background: #d8b440; }
+.btn:active { transform: translateY(1px); }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid #555;
+  color: #ddd;
+}
+.btn-ghost:hover { background: #2c2c2c; color: #fff; }
+.btn-secondary {
+  background: #2c5f8d;
+  color: #fff;
+}
+.btn-secondary:hover { background: #3a78ab; }
+.btn-return {
+  background: #2c5f8d;
+  color: #fff;
+}
+.btn-return:hover { background: #3a78ab; }
+.btn-import {
+  background: #1a661a;
+  color: #fff;
+}
+.btn-import:hover { background: #248d24; }
+
+/* ── Account button & menu ───────────────────────── */
+.account-wrap { position: relative; }
+#account-btn {
+  background: #1a1a1a;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#account-btn:hover { background: #2c2c2c; }
+.account-avatar {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #c8a430;
+  color: #1a1a1a;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: bold;
+  text-transform: uppercase;
+}
+.account-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+#account-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0ddd5;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  min-width: 220px;
+  z-index: 50;
+  overflow: hidden;
+}
+#account-menu.open { display: block; }
+.acct-info {
+  padding: 12px 14px;
+  background: #f5f3ef;
+  border-bottom: 1px solid #e0ddd5;
+}
+.acct-info .name { font-weight: bold; font-size: 14px; color: #1a1a1a; }
+.acct-info .email { font-size: 12px; color: #666; margin-top: 2px; word-break: break-all; }
+.acct-info .provider {
+  font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;
+}
+.acct-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #1a1a1a;
+  font-family: inherit;
+}
+.acct-menu-item:hover { background: #f5f3ef; }
+.acct-menu-item.danger { color: #c0392b; }
+
+/* ── Sign-in modal ───────────────────────────────── */
+#signin-modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 2000;
+  align-items: center; justify-content: center;
+  padding: 16px;
+}
+#signin-modal-overlay.open { display: flex; }
+.signin-box {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 380px;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  position: relative;
+}
+.signin-header {
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid #e6e3da;
+  text-align: center;
+}
+.signin-title { font-size: 20px; font-weight: bold; margin-bottom: 4px; }
+.signin-subtitle { font-size: 12px; color: #666; }
+.signin-body { padding: 18px 24px 22px; }
+
+.oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  margin-bottom: 8px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.oauth-btn:hover { background: #fafaf7; border-color: #c8a430; }
+.oauth-btn svg, .oauth-btn .oauth-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.oauth-btn.google { color: #3c4043; }
+.oauth-btn.facebook { color: #fff; background: #1877f2; border-color: #1877f2; }
+.oauth-btn.facebook:hover { background: #166fe5; border-color: #166fe5; }
+
+.divider-text {
+  display: flex; align-items: center;
+  text-align: center;
+  color: #999; font-size: 12px;
+  margin: 14px 0;
+}
+.divider-text::before, .divider-text::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e0ddd5;
+}
+.divider-text span { padding: 0 10px; }
+
+.form-row { margin-bottom: 10px; }
+.form-row label {
+  display: block;
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.form-row input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #d4d1c8;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fafaf7;
+  outline: none;
+}
+.form-row input:focus { border-color: #c8a430; }
+.signin-submit {
+  width: 100%;
+  background: #c8a430;
+  color: #1a1a1a;
+  border: none;
+  padding: 11px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 8px;
+}
+.signin-submit:hover { background: #d8b440; }
+.signin-toggle {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  margin-top: 14px;
+}
+.signin-toggle a {
+  color: #2c5f8d;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: underline;
+}
+.signin-error {
+  background: #fef0ed;
+  color: #c0392b;
+  border: 1px solid #f5cabb;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 10px;
+  display: none;
+}
+.signin-error.show { display: block; }
+.signin-info {
+  background: #fff8e1;
+  color: #6a4f00;
+  border: 1px solid #d4a017;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  margin-bottom: 12px;
+  display: none;
+  line-height: 1.4;
+}
+.signin-info.show { display: block; }
+.signin-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #f5f3ef;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #555;
+}
+.signin-close:hover { background: #e6e3da; color: #1a1a1a; }
+
+/* ── Linked accounts modal ───────────────────────── */
+.linked-section {
+  border: 1px solid #e0ddd5;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.linked-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.linked-logo {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: bold; font-size: 13px;
+  flex-shrink: 0;
+}
+.linked-logo.cc { background: #81b64c; }
+.linked-logo.li { background: #1a1a1a; }
+.linked-logo.fi { background: #2c5f8d; }
+.linked-name { font-weight: bold; font-size: 14px; flex: 1; }
+.linked-status {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: #f5f3ef;
+  color: #888;
+  white-space: nowrap;
+}
+.linked-status.ok { background: #e0f3e0; color: #1a661a; }
+.linked-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.linked-row input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid #d4d1c8;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+.linked-row input:focus { border-color: #c8a430; }
+.linked-row button {
+  background: #c8a430;
+  color: #1a1a1a;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.linked-row button.unlink { background: #fff; border: 1px solid #c0392b; color: #c0392b; }
+.linked-details {
+  font-size: 12px;
+  color: #555;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.linked-details .rating-pill {
+  display: inline-block;
+  background: #ecebe6;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin: 2px 4px 2px 0;
+  font-size: 11px;
+}
+.linked-details a { color: #2c5f8d; text-decoration: none; }
+.linked-details a:hover { text-decoration: underline; }
+.linked-note { font-size: 11px; color: #888; margin-top: 4px; font-style: italic; }
+.linked-err {
+  background: #fef0ed; color: #c0392b;
+  border: 1px solid #f5cabb;
+  padding: 6px 10px; border-radius: 5px;
+  font-size: 11px; margin-top: 6px;
+}
+
+/* ── Account settings ────────────────────────────── */
+.settings-section {
+  border-top: 1px solid #e6e3da;
+  padding: 14px 0;
+}
+.settings-section:first-of-type { border-top: none; padding-top: 4px; }
+.settings-section-title {
+  font-size: 13px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #555;
+  margin-bottom: 10px;
+}
+.settings-section.danger-zone {
+  background: #fff8f6;
+  margin: 14px -24px -22px;
+  padding: 14px 24px 22px;
+  border-radius: 0 0 12px 12px;
+  border-top: 1px solid #f5cabb;
+}
+.tag-published { background: #ffe8c2; color: #8a4a00; font-weight: bold; }
+.card-remove {
+  background: none; border: none;
+  color: #c0392b; font-size: 18px;
+  cursor: pointer; padding: 0 4px;
+  line-height: 1;
+}
+.card-remove:hover { color: #8a1c10; }
+
+/* ── Main layout ─────────────────────────────────── */
+main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 20px;
+}
+
+/* ── Filters sidebar ─────────────────────────────── */
+.filters {
+  background: #fff;
+  border: 1px solid #e0ddd5;
+  border-radius: 10px;
+  padding: 18px;
+  position: sticky;
+  top: 20px;
+  height: fit-content;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+.filters h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #888;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+.filter-group { margin-bottom: 18px; }
+.filter-group h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.checkbox-list, .radio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.checkbox-list label, .radio-list label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.checkbox-list input, .radio-list input {
+  cursor: pointer;
+}
+.filter-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #d4d1c8;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fafaf7;
+  outline: none;
+}
+.filter-input:focus { border-color: #c8a430; }
+.range-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.range-row .filter-input { flex: 1; }
+.range-row span { font-size: 12px; color: #888; }
+.slider-row { display: flex; align-items: center; gap: 8px; }
+.slider-row input[type=range] { flex: 1; }
+.slider-value { font-size: 12px; color: #555; min-width: 50px; text-align: right; }
+.reset-filters {
+  width: 100%;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid #d4d1c8;
+  color: #666;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  margin-top: 8px;
+}
+.reset-filters:hover { background: #f5f3ef; color: #1a1a1a; }
+
+/* ── Content area ────────────────────────────────── */
+.content {
+  background: #fff;
+  border: 1px solid #e0ddd5;
+  border-radius: 10px;
+  min-height: 500px;
+}
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e0ddd5;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.results-count {
+  font-size: 14px;
+  color: #555;
+}
+.results-count b { color: #1a1a1a; }
+.view-tabs {
+  display: flex;
+  background: #f5f3ef;
+  border-radius: 6px;
+  padding: 3px;
+}
+.view-tab {
+  background: transparent;
+  border: none;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: inherit;
+  color: #666;
+  font-weight: 500;
+}
+.view-tab.active {
+  background: #fff;
+  color: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #666;
+}
+#sort-select {
+  border: 1px solid #d4d1c8;
+  padding: 6px 8px;
+  border-radius: 5px;
+  background: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ── Tournament list ─────────────────────────────── */
+.tournament-list { padding: 12px; }
+.tournament-card {
+  border: 1px solid #e6e3da;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.05s, box-shadow 0.15s;
+  background: #fff;
+}
+.tournament-card:hover {
+  border-color: #c8a430;
+  box-shadow: 0 2px 8px rgba(200,164,48,0.1);
+}
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1a1a1a;
+}
+.card-distance {
+  font-size: 12px;
+  color: #2c5f8d;
+  font-weight: bold;
+  white-space: nowrap;
+  background: #eaf2fa;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+.card-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+  color: #666;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.card-meta .meta-icon { opacity: 0.6; margin-right: 3px; }
+.card-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tag {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #f0ede4;
+  color: #555;
+  font-weight: 500;
+}
+.tag-classical { background: #e3eff5; color: #1a4a6e; }
+.tag-rapid { background: #fff3e0; color: #8a4a00; }
+.tag-blitz { background: #ffe5e5; color: #aa1a1a; }
+.tag-open { background: #e0f3e0; color: #1a661a; }
+.tag-rated { background: #fef0e1; color: #a06400; }
+.tag-women { background: #f5e0f0; color: #7a1c70; }
+.tag-junior { background: #e9e0fa; color: #4a1f8a; }
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+.empty-state h3 { font-size: 16px; color: #555; margin-bottom: 6px; }
+
+/* ── Map view ────────────────────────────────────── */
+#map {
+  height: 70vh;
+  min-height: 500px;
+  width: 100%;
+  border-radius: 0 0 10px 10px;
+}
+.leaflet-popup-content {
+  margin: 12px 14px;
+  font-family: inherit;
+}
+.popup-title { font-weight: bold; font-size: 14px; margin-bottom: 4px; }
+.popup-meta { font-size: 12px; color: #666; margin-bottom: 6px; }
+.popup-btn {
+  background: #c8a430; color: #1a1a1a; border: none;
+  padding: 5px 10px; border-radius: 4px; font-size: 12px;
+  cursor: pointer; font-family: inherit; font-weight: bold;
+}
+
+/* ── Detail modal ────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #f5f3ef;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  color: #555;
+}
+.modal-close:hover { background: #e6e3da; color: #1a1a1a; }
+.modal-header {
+  padding: 24px 24px 18px;
+  border-bottom: 1px solid #e6e3da;
+}
+.modal-title { font-size: 22px; font-weight: bold; margin-bottom: 4px; padding-right: 30px; }
+.modal-location { font-size: 14px; color: #666; }
+.modal-body { padding: 18px 24px; }
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 24px;
+  margin-bottom: 18px;
+}
+.detail-item .detail-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #888;
+  margin-bottom: 2px;
+}
+.detail-item .detail-value {
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+.detail-desc {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.6;
+  border-top: 1px solid #e6e3da;
+  padding-top: 14px;
+  margin-top: 8px;
+}
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e6e3da;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.signup-status {
+  font-size: 13px;
+  color: #1a661a;
+  font-weight: bold;
+  background: #e0f3e0;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+/* Sign-up form */
+.signup-form {
+  display: none;
+  margin-top: 14px;
+  padding: 14px;
+  background: #faf8f3;
+  border: 1px solid #e6e3da;
+  border-radius: 6px;
+}
+.signup-form.open { display: block; }
+.signup-form label {
+  display: block;
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 4px;
+  margin-top: 8px;
+}
+.signup-form input, .signup-form select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d4d1c8;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: inherit;
+}
+.signup-form-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+/* ── Mobile ──────────────────────────────────────── */
+.mobile-filter-btn {
+  display: none;
+  background: #c8a430;
+  color: #1a1a1a;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; padding: 12px; }
+  .filters {
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    width: 85%;
+    max-width: 320px;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    border-radius: 0;
+    max-height: 100vh;
+    border-right: 1px solid #e0ddd5;
+    border-top: none;
+    border-bottom: none;
+    border-left: none;
+  }
+  .filters.open { transform: translateX(0); }
+  .filters::before {
+    content: "✕";
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    background: #f5f3ef;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #555;
+  }
+  .filter-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 998;
+  }
+  .filter-overlay.open { display: block; }
+  .mobile-filter-btn { display: inline-block; }
+  .header-inner { padding: 0 14px; }
+  #search { width: 100%; }
+  .search-wrap { flex: 1; min-width: 200px; }
+  .brand-tag { display: none; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark">&#9823;</span>
+      <span class="brand-name">ChessOTB</span>
+      <span class="brand-tag">Find tournaments near you</span>
+    </div>
+    <div class="header-actions">
+      <div class="search-wrap">
+        <input type="search" id="search" placeholder="Search by name, city, country...">
+      </div>
+      <button class="btn btn-ghost" id="use-location" title="Find tournaments near my location">📍 Near me</button>
+      <button class="btn btn-import" id="import-btn" title="Import a tournament published from Tournament Manager">+ Import</button>
+      <button class="btn btn-return" id="return-clock" title="Return to chess clock">← Chess Clock</button>
+      <div class="account-wrap">
+        <button id="account-btn"><span id="account-icon">👤</span><span id="account-label">Sign In</span></button>
+        <div id="account-menu"></div>
+      </div>
+      <button class="mobile-filter-btn" id="mobile-filter-btn">Filters</button>
+    </div>
+  </div>
+</header>
+
+<div class="filter-overlay" id="filter-overlay"></div>
+
+<main>
+  <aside class="filters" id="filters-panel">
+    <h2>Filters</h2>
+
+    <div class="filter-group">
+      <h3>Distance from me</h3>
+      <div class="slider-row">
+        <input type="range" id="distance-slider" min="0" max="20000" step="50" value="20000">
+        <span class="slider-value" id="distance-value">Any</span>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <h3>Date range</h3>
+      <label style="font-size:12px; color:#666;">From</label>
+      <input type="date" id="date-from" class="filter-input">
+      <label style="font-size:12px; color:#666; margin-top:6px; display:block;">To</label>
+      <input type="date" id="date-to" class="filter-input">
+    </div>
+
+    <div class="filter-group">
+      <h3>Format</h3>
+      <div class="checkbox-list" id="format-filters">
+        <label><input type="checkbox" value="Classical" checked> Classical</label>
+        <label><input type="checkbox" value="Rapid" checked> Rapid</label>
+        <label><input type="checkbox" value="Blitz" checked> Blitz</label>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <h3>Your rating</h3>
+      <input type="number" id="rating-input" class="filter-input" placeholder="e.g. 1600" min="0" max="3000">
+      <label style="display:flex; gap:6px; align-items:center; font-size:12px; color:#666; margin-top:6px; cursor:pointer;">
+        <input type="checkbox" id="rating-eligible-only"> Only show events I'm eligible for
+      </label>
+    </div>
+
+    <div class="filter-group">
+      <h3>Entry fee</h3>
+      <div class="slider-row">
+        <input type="range" id="fee-slider" min="0" max="500" step="10" value="500">
+        <span class="slider-value" id="fee-value">Any</span>
+      </div>
+      <label style="display:flex; gap:6px; align-items:center; font-size:12px; color:#666; margin-top:6px; cursor:pointer;">
+        <input type="checkbox" id="free-only"> Free only
+      </label>
+    </div>
+
+    <div class="filter-group">
+      <h3>Section</h3>
+      <div class="checkbox-list" id="section-filters">
+        <label><input type="checkbox" value="Open" checked> Open</label>
+        <label><input type="checkbox" value="Women" checked> Women's</label>
+        <label><input type="checkbox" value="Junior" checked> Junior</label>
+        <label><input type="checkbox" value="Senior" checked> Senior</label>
+        <label><input type="checkbox" value="Team" checked> Team</label>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <h3>FIDE rated</h3>
+      <div class="radio-list">
+        <label><input type="radio" name="rated" value="any" checked> Any</label>
+        <label><input type="radio" name="rated" value="rated"> FIDE-rated only</label>
+        <label><input type="radio" name="rated" value="unrated"> Unrated only</label>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <h3>Country</h3>
+      <select id="country-filter" class="filter-input">
+        <option value="">Any country</option>
+      </select>
+    </div>
+
+    <button class="reset-filters" id="reset-filters">Reset all filters</button>
+  </aside>
+
+  <section class="content">
+    <div class="content-header">
+      <div class="results-count">
+        <b id="result-count">0</b> tournaments found
+      </div>
+      <div class="view-tabs">
+        <button class="view-tab active" data-view="list">List</button>
+        <button class="view-tab" data-view="map">Map</button>
+      </div>
+      <div class="sort-wrap">
+        <label for="sort-select">Sort:</label>
+        <select id="sort-select">
+          <option value="date">Date (soonest)</option>
+          <option value="distance">Distance</option>
+          <option value="fee-low">Entry fee (low → high)</option>
+          <option value="fee-high">Entry fee (high → low)</option>
+          <option value="prize">Prize fund (high → low)</option>
+          <option value="name">Name (A → Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="view-list" class="tournament-list"></div>
+    <div id="view-map" style="display:none"><div id="map"></div></div>
+  </section>
+</main>
+
+<!-- Detail modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modal-close">&times;</button>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-location" id="modal-location"></div>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid" id="modal-details"></div>
+      <div class="detail-desc" id="modal-desc"></div>
+      <div class="signup-form" id="signup-form">
+        <label>Full name</label>
+        <input type="text" id="signup-name" placeholder="e.g. Magnus Carlsen">
+        <label>FIDE rating (if any)</label>
+        <input type="number" id="signup-rating" placeholder="e.g. 1600" min="0" max="3000">
+        <label>Email</label>
+        <input type="email" id="signup-email" placeholder="you@example.com">
+        <label>Section</label>
+        <select id="signup-section"></select>
+        <div class="signup-form-actions">
+          <button class="btn" id="signup-submit">Confirm Sign-Up</button>
+          <button class="btn btn-ghost" id="signup-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div id="signup-status-display"></div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost" id="modal-website">Visit website</button>
+        <button class="btn" id="modal-signup">Sign Up</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Account settings modal -->
+<div id="settings-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2000;align-items:center;justify-content:center;padding:16px;">
+  <div class="signin-box" style="max-width:460px;">
+    <button class="signin-close" id="settings-close">&times;</button>
+    <div class="signin-header">
+      <div class="signin-title">Account Settings</div>
+      <div class="signin-subtitle">Manage your profile, password, and preferences</div>
+    </div>
+    <div class="signin-body">
+      <div class="signin-error" id="settings-error"></div>
+      <div class="signin-info" id="settings-info"></div>
+
+      <!-- Profile section -->
+      <div class="settings-section">
+        <div class="settings-section-title">Profile</div>
+        <div class="form-row">
+          <label>Display name</label>
+          <input type="text" id="settings-name" placeholder="e.g. Alice">
+        </div>
+        <div class="form-row" id="settings-email-row">
+          <label>Email</label>
+          <input type="email" id="settings-email" placeholder="you@example.com">
+        </div>
+        <div class="form-row">
+          <label>FIDE rating</label>
+          <input type="number" id="settings-rating" min="0" max="3000" placeholder="e.g. 1600">
+        </div>
+        <button class="signin-submit" id="settings-save-profile">Save Profile</button>
+      </div>
+
+      <!-- Password section (local accounts only) -->
+      <div class="settings-section" id="settings-password-section">
+        <div class="settings-section-title">Change Password</div>
+        <div class="form-row">
+          <label>Current password</label>
+          <input type="password" id="settings-current-pw" autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <div class="form-row">
+          <label>New password</label>
+          <input type="password" id="settings-new-pw" autocomplete="new-password" placeholder="At least 6 characters">
+        </div>
+        <div class="form-row">
+          <label>Confirm new password</label>
+          <input type="password" id="settings-confirm-pw" autocomplete="new-password" placeholder="Re-enter new password">
+        </div>
+        <button class="signin-submit" id="settings-change-pw">Change Password</button>
+      </div>
+
+      <!-- Preferences -->
+      <div class="settings-section">
+        <div class="settings-section-title">Preferences</div>
+        <div class="form-row">
+          <label>Default sort order</label>
+          <select id="settings-sort" class="filter-input">
+            <option value="date">Date (soonest)</option>
+            <option value="distance">Distance</option>
+            <option value="fee-low">Entry fee (low → high)</option>
+            <option value="fee-high">Entry fee (high → low)</option>
+            <option value="prize">Prize fund (high → low)</option>
+            <option value="name">Name (A → Z)</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Distance units</label>
+          <select id="settings-units" class="filter-input">
+            <option value="km">Kilometers (km)</option>
+            <option value="mi">Miles (mi)</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;text-transform:none;letter-spacing:0;">
+            <input type="checkbox" id="settings-only-eligible" style="width:auto;">
+            <span>By default, only show tournaments I'm eligible for (based on my rating)</span>
+          </label>
+        </div>
+        <button class="signin-submit" id="settings-save-prefs">Save Preferences</button>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="settings-section danger-zone">
+        <div class="settings-section-title" style="color:#c0392b;">Danger Zone</div>
+        <p style="font-size:12px;color:#666;margin-bottom:10px;line-height:1.5;">
+          Deleting your account removes your profile, linked chess.com / lichess / FIDE accounts, and tournament sign-ups from this device. This cannot be undone.
+        </p>
+        <button class="oauth-btn" style="background:#fff;color:#c0392b;border-color:#c0392b;" id="settings-delete-account">Delete Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Linked accounts modal -->
+<div id="linked-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2000;align-items:center;justify-content:center;padding:16px;">
+  <div class="signin-box" style="max-width:460px;">
+    <button class="signin-close" id="linked-close">&times;</button>
+    <div class="signin-header">
+      <div class="signin-title">Link Chess Accounts</div>
+      <div class="signin-subtitle">Link your chess.com, lichess.org and FIDE profile</div>
+    </div>
+    <div class="signin-body">
+
+      <div class="linked-section" id="link-cc">
+        <div class="linked-head">
+          <div class="linked-logo cc">CC</div>
+          <div class="linked-name">Chess.com</div>
+          <div class="linked-status" id="cc-status">Not linked</div>
+        </div>
+        <div class="linked-row">
+          <input type="text" id="cc-input" placeholder="chess.com username (e.g. magnuscarlsen)" autocomplete="off">
+          <button id="cc-link-btn">Link</button>
+          <button id="cc-unlink-btn" class="unlink" style="display:none">Unlink</button>
+        </div>
+        <div class="linked-details" id="cc-details"></div>
+      </div>
+
+      <div class="linked-section" id="link-li">
+        <div class="linked-head">
+          <div class="linked-logo li">L</div>
+          <div class="linked-name">Lichess.org</div>
+          <div class="linked-status" id="li-status">Not linked</div>
+        </div>
+        <div class="linked-row">
+          <input type="text" id="li-input" placeholder="lichess username (e.g. DrNykterstein)" autocomplete="off">
+          <button id="li-link-btn">Link</button>
+          <button id="li-unlink-btn" class="unlink" style="display:none">Unlink</button>
+        </div>
+        <div class="linked-details" id="li-details"></div>
+      </div>
+
+      <div class="linked-section" id="link-fi">
+        <div class="linked-head">
+          <div class="linked-logo fi">FIDE</div>
+          <div class="linked-name">FIDE Profile</div>
+          <div class="linked-status" id="fi-status">Not linked</div>
+        </div>
+        <div class="linked-row">
+          <input type="text" id="fi-input" placeholder="FIDE ID (e.g. 1503014)" autocomplete="off" inputmode="numeric">
+          <button id="fi-link-btn">Save</button>
+          <button id="fi-unlink-btn" class="unlink" style="display:none">Unlink</button>
+        </div>
+        <div class="linked-details" id="fi-details"></div>
+        <div class="linked-note">FIDE has no public API. We just save your ID and link to your profile page for self-verification.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Sign-in modal -->
+<div id="signin-modal-overlay">
+  <div class="signin-box">
+    <button class="signin-close" id="signin-close">&times;</button>
+    <div class="signin-header">
+      <div class="signin-title" id="signin-title">Sign In</div>
+      <div class="signin-subtitle" id="signin-subtitle">Sign in to manage your tournament registrations</div>
+      <div style="font-size:11px; color:#888; margin-top:6px; line-height:1.4;">Your sign-in is shared with the Chess Clock app.</div>
+    </div>
+    <div class="signin-body">
+      <div class="signin-error" id="signin-error"></div>
+      <div class="signin-info" id="signin-info"></div>
+
+      <!-- OAuth buttons -->
+      <button class="oauth-btn google" id="google-signin-btn">
+        <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+          <path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/>
+          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/>
+        </svg>
+        <span>Sign in with Google</span>
+      </button>
+      <button class="oauth-btn facebook" id="facebook-signin-btn">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#fff">
+          <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.099 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.013 1.792-4.677 4.532-4.677 1.313 0 2.686.234 2.686.234v2.97h-1.513c-1.49 0-1.955.93-1.955 1.884v2.26h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.099 24 12.073z"/>
+        </svg>
+        <span>Sign in with Facebook</span>
+      </button>
+
+      <div class="divider-text"><span>or</span></div>
+
+      <!-- Email form -->
+      <form id="signin-form" autocomplete="on">
+        <div class="form-row" id="name-row" style="display:none">
+          <label>Full name</label>
+          <input type="text" id="signin-name" autocomplete="name" placeholder="e.g. Magnus Carlsen">
+        </div>
+        <div class="form-row">
+          <label>Email</label>
+          <input type="email" id="signin-email" autocomplete="email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-row">
+          <label>Password</label>
+          <input type="password" id="signin-password" autocomplete="current-password" placeholder="••••••••" required>
+        </div>
+        <div class="form-row" id="rating-row" style="display:none">
+          <label>FIDE rating (optional)</label>
+          <input type="number" id="signin-rating" min="0" max="3000" placeholder="e.g. 1600">
+        </div>
+        <button type="submit" class="signin-submit" id="signin-submit-btn">Sign In</button>
+      </form>
+
+      <div class="signin-toggle">
+        <span id="signin-toggle-text">Don't have an account?</span>
+        <a id="signin-toggle-link">Create one</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import modal -->
+<div class="modal-overlay" id="import-overlay">
+  <div class="modal" id="import-modal">
+    <button class="modal-close" id="import-close">&times;</button>
+    <div class="modal-header">
+      <div class="modal-title">Import Tournament</div>
+      <div class="modal-location">Paste JSON from Tournament Manager</div>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px; color:#555; margin-bottom:10px; line-height:1.5;">
+        Open the <b>Tournament Manager</b> app → set up your tournament → tap <b>Publish to Tournament Finder</b> to copy a JSON snippet. Paste it here to add the event to your visible list (it persists locally).
+      </p>
+      <textarea id="import-textarea" placeholder='{"id":"…","name":"…",…}'
+        style="width:100%; min-height:140px; padding:10px; font-family:monospace; font-size:12px; border:1px solid #d4d1c8; border-radius:6px; resize:vertical; box-sizing:border-box;"></textarea>
+      <div id="import-error" style="color:#c0392b; font-size:12px; margin-top:6px; display:none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="import-paste">📋 Paste from clipboard</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost" id="import-cancel">Cancel</button>
+        <button class="btn" id="import-submit">Import</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+// ════════════════════════════════════════════════════════════════
+// OAUTH CONFIGURATION
+// ────────────────────────────────────────────────────────────────
+// To enable real Google / Facebook sign-in:
+//   1. Host this file on a real HTTPS domain (e.g. github.io, netlify).
+//   2. Google: create an OAuth Client ID at console.cloud.google.com/apis/credentials
+//      and add your domain to "Authorized JavaScript origins".
+//   3. Facebook: create an App at developers.facebook.com/apps/,
+//      enable "Facebook Login for the Web", add your domain to App Domains.
+//   4. Paste the IDs below.
+//
+// LIMITATION: Both providers REJECT the `file://` origin used by Android WebView
+// (the chess clock build). When OAuth fails, the sign-in modal automatically
+// shows a friendly explanation and offers the local email-account fallback.
+// ════════════════════════════════════════════════════════════════
+const OAUTH_CONFIG = {
+  googleClientId: '',  // e.g. '1234567890-abc.apps.googleusercontent.com'
+  facebookAppId:  ''   // e.g. '1234567890123456'
+};
+
+// ── Tournament dataset ──────────────────────────────
+const TOURNAMENTS = [
+  { id:'tata2026', name:'Tata Steel Chess Tournament', city:'Wijk aan Zee', country:'Netherlands', lat:52.4928, lon:4.5961,
+    startDate:'2026-01-09', endDate:'2026-01-25', format:'Classical', timeControl:'100min/40 + 50min/20 + 15min + 30s/move',
+    entryFee:75, currency:'EUR', prizeFund:250000, ratingMin:0, ratingMax:null, sections:['Masters','Challengers','Amateur'], rated:true,
+    rounds:13, website:'https://tatasteelchess.com',
+    description:'Annual elite chess tournament featuring world-class grandmasters. Open section for amateurs of all levels.' },
+
+  { id:'gibraltar2026', name:'Gibraltar Masters', city:'Gibraltar', country:'Gibraltar', lat:36.1408, lon:-5.3536,
+    startDate:'2026-01-26', endDate:'2026-02-05', format:'Classical', timeControl:'100min/40 + 50min/20 + 15min + 30s/move',
+    entryFee:280, currency:'GBP', prizeFund:250000, ratingMin:0, ratingMax:null, sections:['Open','Women','Junior'], rated:true,
+    rounds:10, website:'https://gibchess.com',
+    description:'One of the strongest open tournaments in the world. Attracts elite players plus thousands of amateurs.' },
+
+  { id:'reykjavik2026', name:'Reykjavík Open', city:'Reykjavík', country:'Iceland', lat:64.1466, lon:-21.9426,
+    startDate:'2026-04-07', endDate:'2026-04-15', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:130, currency:'EUR', prizeFund:50000, ratingMin:0, ratingMax:null, sections:['Open','Junior'], rated:true,
+    rounds:10, website:'https://www.skaksamband.is/',
+    description:'Historic open tournament held in Iceland\'s capital. Strong field and famously friendly atmosphere.' },
+
+  { id:'hastings2026', name:'Hastings International Congress', city:'Hastings', country:'United Kingdom', lat:50.8552, lon:0.5729,
+    startDate:'2026-12-28', endDate:'2027-01-05', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:160, currency:'GBP', prizeFund:30000, ratingMin:0, ratingMax:null, sections:['Masters','Challengers','Amateur'], rated:true,
+    rounds:9, website:'https://hastingschess.com',
+    description:'The oldest chess tournament in the world, running annually since 1895.' },
+
+  { id:'usopen2026', name:'U.S. Open Chess Championship', city:'Schaumburg', country:'USA', lat:42.0334, lon:-88.0834,
+    startDate:'2026-07-25', endDate:'2026-08-02', format:'Classical', timeControl:'40/90 + 30 SD/30 + 30s/move',
+    entryFee:240, currency:'USD', prizeFund:25000, ratingMin:0, ratingMax:null, sections:['Open','Senior','Junior','Women'], rated:true,
+    rounds:9, website:'https://new.uschess.org/us-open',
+    description:'Annual nine-round Swiss championship of the United States Chess Federation.' },
+
+  { id:'worldopen2026', name:'World Open', city:'Philadelphia', country:'USA', lat:39.9526, lon:-75.1652,
+    startDate:'2026-07-04', endDate:'2026-07-12', format:'Classical', timeControl:'40/90 + SD/30 + 30s/move',
+    entryFee:475, currency:'USD', prizeFund:225000, ratingMin:0, ratingMax:null, sections:['Open','U2200','U2000','U1800','U1600','U1400','U1200','U900'], rated:true,
+    rounds:9, website:'https://www.chesstour.com',
+    description:'One of the largest cash-prize tournaments in the world. Multiple rating sections.' },
+
+  { id:'aeroflot2026', name:'Aeroflot Open', city:'Moscow', country:'Russia', lat:55.7558, lon:37.6173,
+    startDate:'2026-02-22', endDate:'2026-03-03', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:250, currency:'USD', prizeFund:150000, ratingMin:2000, ratingMax:null, sections:['A','B','C'], rated:true,
+    rounds:9, website:'https://aeroflotchess.com',
+    description:'Strong invitational open held annually in Moscow. Famous for elite GM participation.' },
+
+  { id:'cappelle2026', name:'Cappelle-la-Grande Open', city:'Cappelle-la-Grande', country:'France', lat:50.9939, lon:2.3500,
+    startDate:'2026-02-14', endDate:'2026-02-21', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:80, currency:'EUR', prizeFund:36000, ratingMin:0, ratingMax:null, sections:['Open'], rated:true,
+    rounds:9, website:'https://www.echecsclubcappelle.fr',
+    description:'One of the largest opens in France with over 600 players annually.' },
+
+  { id:'biel2026', name:'Biel Chess Festival', city:'Biel/Bienne', country:'Switzerland', lat:47.1368, lon:7.2467,
+    startDate:'2026-07-12', endDate:'2026-07-24', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:200, currency:'CHF', prizeFund:80000, ratingMin:0, ratingMax:null, sections:['Master Open','General Open','Rapid','Blitz'], rated:true,
+    rounds:11, website:'https://www.bielchessfestival.ch',
+    description:'Long-running international chess festival in Switzerland with multiple sections.' },
+
+  { id:'sigeman2026', name:'TePe Sigeman & Co Chess Tournament', city:'Malmö', country:'Sweden', lat:55.6049, lon:13.0038,
+    startDate:'2026-05-04', endDate:'2026-05-11', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:0, currency:'SEK', prizeFund:300000, ratingMin:2500, ratingMax:null, sections:['Invitational'], rated:true,
+    rounds:7, website:'https://www.sigemanchess.com',
+    description:'Elite invitation-only event. Spectator passes available; players by invitation only.' },
+
+  { id:'prague2026', name:'Prague International Chess Festival', city:'Prague', country:'Czechia', lat:50.0755, lon:14.4378,
+    startDate:'2026-03-20', endDate:'2026-03-31', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:120, currency:'EUR', prizeFund:60000, ratingMin:0, ratingMax:null, sections:['Masters','Challengers','Futures','Open'], rated:true,
+    rounds:9, website:'https://praguechessfestival.com',
+    description:'Modern festival featuring elite invitational plus large open section.' },
+
+  { id:'sharjah2026', name:'Sharjah Masters', city:'Sharjah', country:'United Arab Emirates', lat:25.3463, lon:55.4209,
+    startDate:'2026-04-15', endDate:'2026-04-25', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:0, currency:'USD', prizeFund:80000, ratingMin:2300, ratingMax:null, sections:['Masters'], rated:true,
+    rounds:9, website:'https://sharjahchessclub.com',
+    description:'Strong GM-norm tournament in the UAE. Free entry for rated players above 2300.' },
+
+  { id:'qatar2026', name:'Qatar Masters Open', city:'Doha', country:'Qatar', lat:25.2854, lon:51.5310,
+    startDate:'2026-12-26', endDate:'2027-01-04', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:300, currency:'USD', prizeFund:170000, ratingMin:0, ratingMax:null, sections:['Open'], rated:true,
+    rounds:10, website:'https://www.qatarmasters.com',
+    description:'High-prize open featuring many of the world\'s top grandmasters.' },
+
+  { id:'geneva2026', name:'Geneva International Chess Open', city:'Geneva', country:'Switzerland', lat:46.2044, lon:6.1432,
+    startDate:'2026-08-09', endDate:'2026-08-16', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:140, currency:'CHF', prizeFund:25000, ratingMin:0, ratingMax:null, sections:['Open','Amateur'], rated:true,
+    rounds:9, website:'https://www.genevachessopen.ch',
+    description:'Summer chess open held in central Geneva.' },
+
+  { id:'andorra2026', name:'Andorra Open', city:'Andorra la Vella', country:'Andorra', lat:42.5063, lon:1.5218,
+    startDate:'2026-07-18', endDate:'2026-07-26', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:90, currency:'EUR', prizeFund:18000, ratingMin:0, ratingMax:null, sections:['Open','Amateur'], rated:true,
+    rounds:9, website:'https://andorraopen.com',
+    description:'Annual summer open in the Pyrenees principality. Family-friendly.' },
+
+  { id:'bangkok2026', name:'Bangkok Chess Club Open', city:'Bangkok', country:'Thailand', lat:13.7563, lon:100.5018,
+    startDate:'2026-04-10', endDate:'2026-04-19', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:175, currency:'USD', prizeFund:40000, ratingMin:0, ratingMax:null, sections:['Open','Challengers'], rated:true,
+    rounds:9, website:'https://bangkokchess.com',
+    description:'Southeast Asia\'s premier open tournament.' },
+
+  { id:'auschamp2026', name:'Australian Chess Championship', city:'Sydney', country:'Australia', lat:-33.8688, lon:151.2093,
+    startDate:'2027-01-02', endDate:'2027-01-13', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:300, currency:'AUD', prizeFund:30000, ratingMin:0, ratingMax:null, sections:['Championship','Reserves','Minor'], rated:true,
+    rounds:11, website:'https://auschess.org.au',
+    description:'Australia\'s national open championship.' },
+
+  { id:'stpauli2026', name:'St. Pauli Summer Open', city:'Hamburg', country:'Germany', lat:53.5511, lon:9.9937,
+    startDate:'2026-07-19', endDate:'2026-07-26', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:55, currency:'EUR', prizeFund:8000, ratingMin:0, ratingMax:null, sections:['Open','U1700'], rated:true,
+    rounds:7, website:'https://www.hsk1830.de',
+    description:'Friendly amateur-focused open at the famous St. Pauli district.' },
+
+  { id:'charlotte2026', name:'Charlotte Open', city:'Charlotte', country:'USA', lat:35.2271, lon:-80.8431,
+    startDate:'2026-09-04', endDate:'2026-09-07', format:'Classical', timeControl:'40/90 + SD/30 + 30s/move',
+    entryFee:170, currency:'USD', prizeFund:50000, ratingMin:0, ratingMax:null, sections:['Open','U2000','U1800','U1600','U1400'], rated:true,
+    rounds:9, website:'https://charlottechesscenter.org',
+    description:'Major Labor Day weekend tournament with multiple rating sections.' },
+
+  { id:'lasvegas2026', name:'National Open Las Vegas', city:'Las Vegas', country:'USA', lat:36.1699, lon:-115.1398,
+    startDate:'2026-06-11', endDate:'2026-06-14', format:'Classical', timeControl:'40/90 + SD/30 + 30s/move',
+    entryFee:295, currency:'USD', prizeFund:200000, ratingMin:0, ratingMax:null, sections:['Open','U2300','U2100','U1900','U1700','U1500','U1300','U1100'], rated:true,
+    rounds:6, website:'https://www.vegaschessfestival.com',
+    description:'Annual Las Vegas chess festival including blitz, rapid, and the National Open.' },
+
+  { id:'stockholm2026', name:'Stockholm Chess Challenge', city:'Stockholm', country:'Sweden', lat:59.3293, lon:18.0686,
+    startDate:'2026-12-27', endDate:'2027-01-05', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:70, currency:'EUR', prizeFund:10000, ratingMin:0, ratingMax:null, sections:['Open','Elo<1800'], rated:true,
+    rounds:9, website:'https://stockholmchallenge.se',
+    description:'Traditional New Year\'s tournament in Sweden\'s capital.' },
+
+  { id:'vienna2026', name:'Vienna Chess Open', city:'Vienna', country:'Austria', lat:48.2082, lon:16.3738,
+    startDate:'2026-08-15', endDate:'2026-08-23', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:95, currency:'EUR', prizeFund:18000, ratingMin:0, ratingMax:null, sections:['A','B','C'], rated:true,
+    rounds:9, website:'https://chess-results.com',
+    description:'Classical open in the capital of chess history.' },
+
+  { id:'mumbai2026', name:'Mumbai Mayor\'s Cup', city:'Mumbai', country:'India', lat:19.0760, lon:72.8777,
+    startDate:'2026-06-04', endDate:'2026-06-13', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:90, currency:'USD', prizeFund:40000, ratingMin:0, ratingMax:null, sections:['Masters','Challengers'], rated:true,
+    rounds:11, website:'https://www.mcamumbai.com',
+    description:'Major Indian international open held annually in Mumbai.' },
+
+  { id:'wsenior2026', name:'World Senior Chess Championship', city:'Prague', country:'Czechia', lat:50.0755, lon:14.4378,
+    startDate:'2026-11-15', endDate:'2026-11-27', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:200, currency:'EUR', prizeFund:35000, ratingMin:0, ratingMax:null, sections:['50+','65+'], rated:true,
+    rounds:11, website:'https://www.fide.com',
+    description:'FIDE-organized world championship for senior players. Age restrictions apply by section.' },
+
+  { id:'riga2026', name:'Riga Technical University Open', city:'Riga', country:'Latvia', lat:56.9496, lon:24.1052,
+    startDate:'2026-08-08', endDate:'2026-08-15', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:75, currency:'EUR', prizeFund:12000, ratingMin:0, ratingMax:null, sections:['A','B','C'], rated:true,
+    rounds:9, website:'https://www.rtu.lv',
+    description:'Annual summer chess open with friendly Baltic atmosphere.' },
+
+  { id:'madrid2026', name:'Madrid Magistral', city:'Madrid', country:'Spain', lat:40.4168, lon:-3.7038,
+    startDate:'2026-07-04', endDate:'2026-07-13', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:85, currency:'EUR', prizeFund:20000, ratingMin:0, ratingMax:null, sections:['Open','U2200','U1900'], rated:true,
+    rounds:9, website:'https://chess-results.com',
+    description:'Summer open in Madrid with multiple rating sections.' },
+
+  { id:'lugano2026', name:'Lugano Open', city:'Lugano', country:'Switzerland', lat:46.0037, lon:8.9511,
+    startDate:'2026-03-21', endDate:'2026-03-29', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:120, currency:'CHF', prizeFund:15000, ratingMin:0, ratingMax:null, sections:['Open','Amateur'], rated:true,
+    rounds:7, website:'https://chess-results.com',
+    description:'Spring tournament on the shores of Lake Lugano.' },
+
+  { id:'berlin2026', name:'Berlin Summer Open', city:'Berlin', country:'Germany', lat:52.5200, lon:13.4050,
+    startDate:'2026-07-24', endDate:'2026-08-02', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:80, currency:'EUR', prizeFund:15000, ratingMin:0, ratingMax:null, sections:['Open','U1800'], rated:true,
+    rounds:9, website:'https://chess-results.com',
+    description:'Casual open tournament in central Berlin.' },
+
+  { id:'londonblitz2026', name:'London Chess Classic Blitz', city:'London', country:'United Kingdom', lat:51.5074, lon:-0.1278,
+    startDate:'2026-12-07', endDate:'2026-12-08', format:'Blitz', timeControl:'3min + 2s/move',
+    entryFee:25, currency:'GBP', prizeFund:5000, ratingMin:0, ratingMax:null, sections:['Open'], rated:true,
+    rounds:18, website:'https://londonchessclassic.com',
+    description:'Side event of the London Chess Classic festival.' },
+
+  { id:'paristour2026', name:'Paris Tour Eiffel Rapid', city:'Paris', country:'France', lat:48.8584, lon:2.2945,
+    startDate:'2026-06-20', endDate:'2026-06-21', format:'Rapid', timeControl:'15min + 5s/move',
+    entryFee:40, currency:'EUR', prizeFund:6000, ratingMin:0, ratingMax:null, sections:['Open','Youth'], rated:true,
+    rounds:9, website:'https://chess-results.com',
+    description:'Two-day rapid tournament near the Eiffel Tower.' },
+
+  { id:'oslo2026', name:'Oslo Chess International', city:'Oslo', country:'Norway', lat:59.9139, lon:10.7522,
+    startDate:'2026-09-26', endDate:'2026-10-04', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:110, currency:'EUR', prizeFund:18000, ratingMin:0, ratingMax:null, sections:['A','B'], rated:true,
+    rounds:9, website:'https://www.sjakk.no',
+    description:'Autumn open in the Norwegian capital.' },
+
+  { id:'tokyoblitz2026', name:'Tokyo Chess Blitz Festival', city:'Tokyo', country:'Japan', lat:35.6762, lon:139.6503,
+    startDate:'2026-11-21', endDate:'2026-11-22', format:'Blitz', timeControl:'5min + 3s/move',
+    entryFee:30, currency:'USD', prizeFund:4000, ratingMin:0, ratingMax:null, sections:['Open'], rated:false,
+    rounds:13, website:'https://japanchess.org',
+    description:'Friendly weekend blitz festival in central Tokyo.' },
+
+  { id:'capetownopen2026', name:'Cape Town International Open', city:'Cape Town', country:'South Africa', lat:-33.9249, lon:18.4241,
+    startDate:'2026-10-03', endDate:'2026-10-11', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:120, currency:'USD', prizeFund:25000, ratingMin:0, ratingMax:null, sections:['Open','Junior'], rated:true,
+    rounds:9, website:'https://chess-results.com',
+    description:'Africa\'s leading open tournament held on the Atlantic coast.' },
+
+  { id:'helsinki2026', name:'Helsinki Chess Open', city:'Helsinki', country:'Finland', lat:60.1699, lon:24.9384,
+    startDate:'2026-06-13', endDate:'2026-06-18', format:'Rapid', timeControl:'15min + 10s/move',
+    entryFee:30, currency:'EUR', prizeFund:5000, ratingMin:0, ratingMax:null, sections:['A','B','Youth'], rated:true,
+    rounds:9, website:'https://shakkiliitto.fi',
+    description:'Compact summer rapid tournament in Finland.' },
+
+  { id:'budapest2026', name:'Budapest First Saturday', city:'Budapest', country:'Hungary', lat:47.4979, lon:19.0402,
+    startDate:'2026-05-02', endDate:'2026-05-11', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:140, currency:'EUR', prizeFund:5000, ratingMin:0, ratingMax:null, sections:['GM','IM','FM'], rated:true,
+    rounds:9, website:'https://firstsaturday.hu',
+    description:'Monthly norm tournament since 1993 — IM and GM norms available.' },
+
+  { id:'lisbon2026', name:'Lisbon Chess Open', city:'Lisbon', country:'Portugal', lat:38.7223, lon:-9.1393,
+    startDate:'2026-04-04', endDate:'2026-04-12', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:95, currency:'EUR', prizeFund:14000, ratingMin:0, ratingMax:null, sections:['Open','Amateur'], rated:true,
+    rounds:9, website:'https://chess-results.com',
+    description:'Spring open tournament in sunny Lisbon.' },
+
+  { id:'warsawteam2026', name:'Polish Team Championship', city:'Warsaw', country:'Poland', lat:52.2297, lon:21.0122,
+    startDate:'2026-09-12', endDate:'2026-09-20', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:0, currency:'PLN', prizeFund:50000, ratingMin:0, ratingMax:null, sections:['Team'], rated:true,
+    rounds:9, website:'https://pzszach.pl',
+    description:'Annual team championship of Poland. Club teams only.' },
+
+  { id:'dublinblitz2026', name:'Dublin Bunratty Blitz', city:'Dublin', country:'Ireland', lat:53.3498, lon:-6.2603,
+    startDate:'2026-02-13', endDate:'2026-02-15', format:'Blitz', timeControl:'5min + 3s/move',
+    entryFee:35, currency:'EUR', prizeFund:6000, ratingMin:0, ratingMax:null, sections:['Open','U1700'], rated:true,
+    rounds:11, website:'https://www.icu.ie',
+    description:'Famous Irish blitz weekend with a legendary social atmosphere.' },
+
+  { id:'pulasea2026', name:'Pula Sea Open', city:'Pula', country:'Croatia', lat:44.8666, lon:13.8496,
+    startDate:'2026-05-23', endDate:'2026-05-30', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:100, currency:'EUR', prizeFund:14000, ratingMin:0, ratingMax:null, sections:['A','B'], rated:true,
+    rounds:9, website:'https://chess-results.com',
+    description:'Coastal Croatian open with optional beach days between rounds.' },
+
+  { id:'youthworld2026', name:'World Youth Chess Championship', city:'Antalya', country:'Turkey', lat:36.8969, lon:30.7133,
+    startDate:'2026-10-18', endDate:'2026-10-30', format:'Classical', timeControl:'90min + 30s/move',
+    entryFee:0, currency:'EUR', prizeFund:0, ratingMin:0, ratingMax:null, sections:['U18','U16','U14','U12','U10','U8'], rated:true,
+    rounds:11, website:'https://www.fide.com',
+    description:'FIDE world youth championship. Federation-nominated players only.' },
+
+  { id:'parisrapid2026', name:'Paris Grand Prix Rapid', city:'Paris', country:'France', lat:48.8566, lon:2.3522,
+    startDate:'2026-11-07', endDate:'2026-11-08', format:'Rapid', timeControl:'15min + 10s/move',
+    entryFee:55, currency:'EUR', prizeFund:12000, ratingMin:0, ratingMax:null, sections:['Open','Women','Junior'], rated:true,
+    rounds:11, website:'https://www.echecs.asso.fr',
+    description:'Weekend rapid event at the Paris Chess Federation HQ.' }
+];
+
+const CURRENCY_RATES = {  // approximate, to USD for sorting
+  USD: 1, EUR: 1.09, GBP: 1.27, CHF: 1.13, SEK: 0.095, AUD: 0.66, PLN: 0.25
+};
+
+// ── State ──────────────────────────────────────────
+let userLocation = null;
+let filteredList = [];
+let currentView = 'list';
+let selectedTournamentId = null;
+let map = null;
+let mapMarkers = [];
+
+// Published (user-imported) tournaments — persisted in localStorage
+const PUBLISHED_KEY = 'publishedTournaments';
+function loadPublished() {
+  try {
+    const raw = localStorage.getItem(PUBLISHED_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch(e) { return []; }
+}
+function savePublished(arr) {
+  try { localStorage.setItem(PUBLISHED_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+function getAllTournaments() {
+  // Hardcoded list + published, with published overriding by id
+  const pub = loadPublished();
+  const ids = new Set(pub.map(t => t.id));
+  const merged = TOURNAMENTS.filter(t => !ids.has(t.id)).concat(pub);
+  return merged;
+}
+
+// ── Account system ────────────────────────────────
+const USER_KEY = 'chessOTBUser';
+const ACCOUNTS_KEY = 'chessOTBAccounts'; // local email accounts
+let signinMode = 'signin'; // 'signin' | 'signup'
+
+function getCurrentUser() {
+  try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch(e) { return null; }
+}
+function setCurrentUser(u) {
+  if (u) localStorage.setItem(USER_KEY, JSON.stringify(u));
+  else localStorage.removeItem(USER_KEY);
+  renderAccountUI();
+}
+function loadAccounts() {
+  try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveAccounts(a) { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(a)); }
+
+// Very simple obfuscation — NOT real security. Local-only accounts on a single device.
+async function hashPassword(pw) {
+  if (window.crypto && window.crypto.subtle) {
+    const enc = new TextEncoder().encode(pw);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+  // Fallback (very weak)
+  let h = 0; for (let i = 0; i < pw.length; i++) h = ((h << 5) - h + pw.charCodeAt(i)) | 0;
+  return 'fb-' + h.toString(16);
+}
+
+function showSignInError(msg) {
+  const el = document.getElementById('signin-error');
+  el.textContent = msg;
+  el.classList.add('show');
+  document.getElementById('signin-info').classList.remove('show');
+}
+function showSignInInfo(html) {
+  const el = document.getElementById('signin-info');
+  el.innerHTML = html;
+  el.classList.add('show');
+  document.getElementById('signin-error').classList.remove('show');
+}
+function clearSignInMsgs() {
+  document.getElementById('signin-error').classList.remove('show');
+  document.getElementById('signin-info').classList.remove('show');
+}
+function openSignInModal(mode) {
+  signinMode = mode || 'signin';
+  document.getElementById('name-row').style.display = signinMode === 'signup' ? '' : 'none';
+  document.getElementById('rating-row').style.display = signinMode === 'signup' ? '' : 'none';
+  document.getElementById('signin-title').textContent = signinMode === 'signup' ? 'Create Account' : 'Sign In';
+  document.getElementById('signin-subtitle').textContent = signinMode === 'signup'
+    ? 'Create a free account to manage your tournament registrations'
+    : 'Sign in to manage your tournament registrations';
+  document.getElementById('signin-submit-btn').textContent = signinMode === 'signup' ? 'Create Account' : 'Sign In';
+  document.getElementById('signin-toggle-text').textContent = signinMode === 'signup'
+    ? 'Already have an account?' : "Don't have an account?";
+  document.getElementById('signin-toggle-link').textContent = signinMode === 'signup' ? 'Sign in' : 'Create one';
+  document.getElementById('signin-password').setAttribute('autocomplete', signinMode === 'signup' ? 'new-password' : 'current-password');
+  clearSignInMsgs();
+  // If running from file:// — show heads-up about OAuth limitation
+  if (location.protocol === 'file:') {
+    showSignInInfo('<b>OAuth note:</b> Google / Facebook sign-in only works when this site is hosted on a real HTTPS domain. On this offline build you can still create a local email account below.');
+  }
+  document.getElementById('signin-modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('signin-email').focus(), 50);
+}
+function closeSignInModal() {
+  document.getElementById('signin-modal-overlay').classList.remove('open');
+}
+
+function renderAccountUI() {
+  const user = getCurrentUser();
+  const btn = document.getElementById('account-btn');
+  const label = document.getElementById('account-label');
+  const icon = document.getElementById('account-icon');
+  if (!user) {
+    label.textContent = 'Sign In';
+    icon.textContent = '👤';
+    icon.innerHTML = '👤';
+    closeAccountMenu();
+    return;
+  }
+  label.textContent = user.name || user.email;
+  if (user.pic) {
+    icon.innerHTML = '<span class="account-avatar"><img src="' + escHtml(user.pic) + '" alt=""></span>';
+  } else {
+    const initials = (user.name || user.email || '?').trim().slice(0, 1).toUpperCase();
+    icon.innerHTML = '<span class="account-avatar">' + escHtml(initials) + '</span>';
+  }
+}
+
+function openAccountMenu() {
+  const user = getCurrentUser();
+  const menu = document.getElementById('account-menu');
+  if (!user) {
+    openSignInModal('signin');
+    return;
+  }
+  const signupCount = Object.keys(loadSignUps()).length;
+  const linked = user.linked || {};
+  const linkedCount = (linked.chesscom ? 1 : 0) + (linked.lichess ? 1 : 0) + (linked.fide ? 1 : 0);
+  menu.innerHTML =
+    '<div class="acct-info">' +
+      '<div class="name">' + escHtml(user.name || '(no name)') + '</div>' +
+      (user.email ? '<div class="email">' + escHtml(user.email) + '</div>' : '') +
+      '<div class="provider">' + escHtml(user.provider || 'local') +
+        (user.rating ? ' · Rating ' + user.rating : '') + '</div>' +
+    '</div>' +
+    '<button class="acct-menu-item" id="acct-mysignups">My sign-ups (' + signupCount + ')</button>' +
+    '<button class="acct-menu-item" id="acct-linked">Linked accounts (' + linkedCount + '/3)</button>' +
+    '<button class="acct-menu-item" id="acct-settings">Account settings</button>' +
+    '<button class="acct-menu-item danger" id="acct-signout">Sign out</button>';
+  menu.classList.add('open');
+  // Wire menu items
+  document.getElementById('acct-signout').addEventListener('click', () => {
+    setCurrentUser(null);
+    closeAccountMenu();
+    render();
+  });
+  document.getElementById('acct-linked').addEventListener('click', () => {
+    closeAccountMenu();
+    openLinkedAccounts();
+  });
+  document.getElementById('acct-settings').addEventListener('click', () => {
+    closeAccountMenu();
+    openAccountSettings();
+  });
+  document.getElementById('acct-mysignups').addEventListener('click', () => {
+    closeAccountMenu();
+    // Filter to signed-up tournaments only
+    const signedIds = Object.keys(loadSignUps());
+    if (signedIds.length === 0) { alert('You have not signed up for any tournaments yet.'); return; }
+    document.getElementById('search').value = '';
+    // Show only signed-up
+    filteredList = getAllTournaments().filter(t => signedIds.indexOf(t.id) >= 0);
+    if (userLocation) filteredList.forEach(t => { t._distance = haversine(userLocation.lat, userLocation.lon, t.lat, t.lon); });
+    applySort();
+    render();
+    document.getElementById('result-count').textContent = filteredList.length;
+  });
+}
+function closeAccountMenu() {
+  document.getElementById('account-menu').classList.remove('open');
+}
+
+// ── Email account flows ───────────────────────────
+async function emailSignIn(email, password) {
+  const accounts = loadAccounts();
+  const acct = accounts[email.toLowerCase()];
+  if (!acct) { showSignInError('No account found for ' + email + '. Try creating one.'); return; }
+  const hash = await hashPassword(password);
+  if (hash !== acct.passwordHash) { showSignInError('Incorrect password.'); return; }
+  setCurrentUser({
+    id: 'local-' + email.toLowerCase(),
+    name: acct.name,
+    email: acct.email,
+    rating: acct.rating || null,
+    provider: 'local'
+  });
+  closeSignInModal();
+}
+async function emailSignUp(name, email, password, rating) {
+  const accounts = loadAccounts();
+  const key = email.toLowerCase();
+  if (accounts[key]) { showSignInError('An account with this email already exists. Sign in instead.'); return; }
+  if (password.length < 6) { showSignInError('Password must be at least 6 characters.'); return; }
+  const passwordHash = await hashPassword(password);
+  accounts[key] = { name, email, rating: rating || null, passwordHash, createdAt: new Date().toISOString() };
+  saveAccounts(accounts);
+  setCurrentUser({
+    id: 'local-' + key,
+    name, email,
+    rating: rating || null,
+    provider: 'local'
+  });
+  closeSignInModal();
+}
+
+// ── Account settings ──────────────────────────────
+const PREFS_KEY = 'chessOTBPrefs';
+function loadPrefs() {
+  try { return JSON.parse(localStorage.getItem(PREFS_KEY) || '{}'); } catch(e) { return {}; }
+}
+function savePrefs(p) { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); }
+function getPref(key, dflt) {
+  const p = loadPrefs();
+  return (key in p) ? p[key] : dflt;
+}
+
+function showSettingsError(msg) {
+  const el = document.getElementById('settings-error');
+  el.textContent = msg;
+  el.classList.add('show');
+  document.getElementById('settings-info').classList.remove('show');
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+function showSettingsInfo(msg) {
+  const el = document.getElementById('settings-info');
+  el.textContent = msg;
+  el.classList.add('show');
+  document.getElementById('settings-error').classList.remove('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function openAccountSettings() {
+  const user = getCurrentUser();
+  if (!user) { openSignInModal('signin'); return; }
+  // Fill fields
+  document.getElementById('settings-name').value = user.name || '';
+  document.getElementById('settings-email').value = user.email || '';
+  document.getElementById('settings-rating').value = user.rating || '';
+  // Email/password sections only editable for local accounts
+  const isLocal = user.provider === 'local';
+  document.getElementById('settings-email').disabled = !isLocal;
+  document.getElementById('settings-password-section').style.display = isLocal ? '' : 'none';
+  if (!isLocal) {
+    showSettingsInfo('Email and password are managed by your ' + user.provider + ' account.');
+  } else {
+    document.getElementById('settings-info').classList.remove('show');
+    document.getElementById('settings-error').classList.remove('show');
+  }
+  // Prefs
+  const prefs = loadPrefs();
+  document.getElementById('settings-sort').value = prefs.sort || 'date';
+  document.getElementById('settings-units').value = prefs.units || 'km';
+  document.getElementById('settings-only-eligible').checked = !!prefs.onlyEligible;
+  // Clear password fields
+  document.getElementById('settings-current-pw').value = '';
+  document.getElementById('settings-new-pw').value = '';
+  document.getElementById('settings-confirm-pw').value = '';
+  document.getElementById('settings-modal-overlay').style.display = 'flex';
+}
+function closeAccountSettings() {
+  document.getElementById('settings-modal-overlay').style.display = 'none';
+}
+
+async function saveProfileChanges() {
+  const user = getCurrentUser();
+  if (!user) return;
+  const name = document.getElementById('settings-name').value.trim();
+  const email = document.getElementById('settings-email').value.trim();
+  const ratingRaw = document.getElementById('settings-rating').value.trim();
+  const rating = ratingRaw ? parseInt(ratingRaw) || null : null;
+  if (!name) { showSettingsError('Display name cannot be empty.'); return; }
+  if (user.provider === 'local') {
+    if (!email || email.indexOf('@') < 0) { showSettingsError('Please enter a valid email.'); return; }
+    const accts = loadAccounts();
+    const oldKey = (user.email || '').toLowerCase();
+    const newKey = email.toLowerCase();
+    if (newKey !== oldKey && accts[newKey]) { showSettingsError('That email is already used by another account.'); return; }
+    const acct = accts[oldKey];
+    if (!acct) { showSettingsError('Account not found.'); return; }
+    if (newKey !== oldKey) {
+      accts[newKey] = Object.assign({}, acct, { name, email, rating });
+      delete accts[oldKey];
+    } else {
+      acct.name = name; acct.email = email; acct.rating = rating;
+    }
+    saveAccounts(accts);
+  }
+  // Update user state
+  const patched = Object.assign({}, user, { name, rating });
+  if (user.provider === 'local') {
+    patched.email = email;
+    patched.id = 'local-' + email.toLowerCase();
+  }
+  setCurrentUser(patched);
+  showSettingsInfo('✓ Profile saved.');
+}
+
+async function changePassword() {
+  const user = getCurrentUser();
+  if (!user || user.provider !== 'local') return;
+  const cur = document.getElementById('settings-current-pw').value;
+  const nw = document.getElementById('settings-new-pw').value;
+  const cf = document.getElementById('settings-confirm-pw').value;
+  if (!cur || !nw || !cf) { showSettingsError('Fill in all three password fields.'); return; }
+  if (nw.length < 6) { showSettingsError('New password must be at least 6 characters.'); return; }
+  if (nw !== cf) { showSettingsError('New passwords do not match.'); return; }
+  const accts = loadAccounts();
+  const key = (user.email || '').toLowerCase();
+  const acct = accts[key];
+  if (!acct) { showSettingsError('Account record not found.'); return; }
+  const curHash = await hashPassword(cur);
+  if (curHash !== acct.passwordHash) { showSettingsError('Current password is incorrect.'); return; }
+  acct.passwordHash = await hashPassword(nw);
+  saveAccounts(accts);
+  document.getElementById('settings-current-pw').value = '';
+  document.getElementById('settings-new-pw').value = '';
+  document.getElementById('settings-confirm-pw').value = '';
+  showSettingsInfo('✓ Password changed.');
+}
+
+function savePreferences() {
+  const prefs = loadPrefs();
+  prefs.sort = document.getElementById('settings-sort').value;
+  prefs.units = document.getElementById('settings-units').value;
+  prefs.onlyEligible = document.getElementById('settings-only-eligible').checked;
+  savePrefs(prefs);
+  // Apply immediately
+  document.getElementById('sort-select').value = prefs.sort;
+  document.getElementById('rating-eligible-only').checked = prefs.onlyEligible;
+  showSettingsInfo('✓ Preferences saved.');
+  applyFilters();
+}
+
+function deleteAccount() {
+  const user = getCurrentUser();
+  if (!user) return;
+  const typed = prompt('To confirm deletion type your name (' + (user.name || user.email) + ') exactly:');
+  if (typed === null) return;
+  if (typed.trim() !== (user.name || user.email)) { alert('Name did not match. Account NOT deleted.'); return; }
+  // Remove local account record
+  if (user.provider === 'local' && user.email) {
+    const accts = loadAccounts();
+    delete accts[user.email.toLowerCase()];
+    saveAccounts(accts);
+  }
+  // Clear sign-ups, current user
+  localStorage.removeItem(SIGNUPS_KEY);
+  setCurrentUser(null);
+  closeAccountSettings();
+  render();
+  alert('Your account has been deleted.');
+}
+
+// ── Linked external accounts (chess.com / lichess / FIDE) ─────────
+function updateLoggedInUser(patch) {
+  const user = getCurrentUser();
+  if (!user) return null;
+  const merged = Object.assign({}, user, patch);
+  if (patch.linked) merged.linked = Object.assign({}, user.linked || {}, patch.linked);
+  setCurrentUser(merged);
+  // Also persist into accounts DB if local account
+  if (user.provider === 'local' && user.email) {
+    const accts = loadAccounts();
+    const key = user.email.toLowerCase();
+    if (accts[key]) {
+      accts[key].linked = merged.linked;
+      saveAccounts(accts);
+    }
+  }
+  return merged;
+}
+
+async function linkChessCom(username) {
+  username = (username || '').trim().toLowerCase();
+  if (!username) throw new Error('Enter your chess.com username.');
+  // Public CORS-enabled API
+  const r = await fetch('https://api.chess.com/pub/player/' + encodeURIComponent(username));
+  if (!r.ok) throw new Error(r.status === 404 ? 'Username not found on chess.com.' : 'Chess.com API error ' + r.status);
+  const profile = await r.json();
+  let stats = null;
+  try {
+    const sr = await fetch('https://api.chess.com/pub/player/' + encodeURIComponent(username) + '/stats');
+    if (sr.ok) stats = await sr.json();
+  } catch(e) {}
+  const ratings = {};
+  if (stats) {
+    if (stats.chess_rapid && stats.chess_rapid.last) ratings.rapid = stats.chess_rapid.last.rating;
+    if (stats.chess_blitz && stats.chess_blitz.last) ratings.blitz = stats.chess_blitz.last.rating;
+    if (stats.chess_bullet && stats.chess_bullet.last) ratings.bullet = stats.chess_bullet.last.rating;
+    if (stats.chess_daily && stats.chess_daily.last) ratings.daily = stats.chess_daily.last.rating;
+  }
+  return {
+    username: profile.username,
+    realname: profile.name || '',
+    avatar: profile.avatar || '',
+    url: profile.url || ('https://www.chess.com/member/' + profile.username),
+    title: profile.title || '',
+    country: profile.country || '',
+    ratings: ratings,
+    verifiedAt: new Date().toISOString()
+  };
+}
+
+async function linkLichess(username) {
+  username = (username || '').trim();
+  if (!username) throw new Error('Enter your lichess username.');
+  const r = await fetch('https://lichess.org/api/user/' + encodeURIComponent(username));
+  if (!r.ok) throw new Error(r.status === 404 ? 'Username not found on lichess.' : 'Lichess API error ' + r.status);
+  const data = await r.json();
+  const ratings = {};
+  if (data.perfs) {
+    ['ultraBullet','bullet','blitz','rapid','classical','correspondence'].forEach(p => {
+      if (data.perfs[p] && data.perfs[p].rating) ratings[p] = data.perfs[p].rating;
+    });
+  }
+  return {
+    username: data.username || data.id,
+    title: data.title || '',
+    url: data.url || ('https://lichess.org/@/' + (data.username || data.id)),
+    profile: data.profile || {},
+    ratings: ratings,
+    verifiedAt: new Date().toISOString()
+  };
+}
+
+function linkFide(id) {
+  id = (id || '').trim();
+  if (!id) throw new Error('Enter your FIDE ID.');
+  if (!/^\d+$/.test(id)) throw new Error('FIDE ID must be numeric.');
+  return {
+    id: id,
+    url: 'https://ratings.fide.com/profile/' + id,
+    verifiedAt: new Date().toISOString()
+  };
+}
+
+function fmtRatingPills(ratings) {
+  if (!ratings) return '';
+  const keys = Object.keys(ratings);
+  if (keys.length === 0) return '<span style="color:#999;">No public ratings</span>';
+  return keys.map(k => '<span class="rating-pill"><b>' + escHtml(k) + '</b> ' + escHtml(String(ratings[k])) + '</span>').join('');
+}
+
+function renderLinkedAccounts() {
+  const user = getCurrentUser();
+  const linked = (user && user.linked) || {};
+
+  // Chess.com
+  const cc = linked.chesscom;
+  document.getElementById('cc-status').textContent = cc ? 'Linked' : 'Not linked';
+  document.getElementById('cc-status').classList.toggle('ok', !!cc);
+  document.getElementById('cc-input').value = cc ? cc.username : '';
+  document.getElementById('cc-input').disabled = !!cc;
+  document.getElementById('cc-link-btn').style.display = cc ? 'none' : '';
+  document.getElementById('cc-unlink-btn').style.display = cc ? '' : 'none';
+  if (cc) {
+    document.getElementById('cc-details').innerHTML =
+      (cc.title ? '<b>' + escHtml(cc.title) + '</b> ' : '') + escHtml(cc.realname || '') +
+      (cc.country ? ' <span style="color:#999;">(' + escHtml(cc.country.split('/').pop()) + ')</span>' : '') +
+      '<br>' + fmtRatingPills(cc.ratings) +
+      '<br><a href="' + escHtml(cc.url) + '" target="_blank">View on chess.com →</a>';
+  } else {
+    document.getElementById('cc-details').textContent = '';
+  }
+
+  // Lichess
+  const li = linked.lichess;
+  document.getElementById('li-status').textContent = li ? 'Linked' : 'Not linked';
+  document.getElementById('li-status').classList.toggle('ok', !!li);
+  document.getElementById('li-input').value = li ? li.username : '';
+  document.getElementById('li-input').disabled = !!li;
+  document.getElementById('li-link-btn').style.display = li ? 'none' : '';
+  document.getElementById('li-unlink-btn').style.display = li ? '' : 'none';
+  if (li) {
+    document.getElementById('li-details').innerHTML =
+      (li.title ? '<b>' + escHtml(li.title) + '</b> ' : '') +
+      (li.profile && li.profile.country ? ' <span style="color:#999;">(' + escHtml(li.profile.country) + ')</span>' : '') +
+      '<br>' + fmtRatingPills(li.ratings) +
+      '<br><a href="' + escHtml(li.url) + '" target="_blank">View on lichess →</a>';
+  } else {
+    document.getElementById('li-details').textContent = '';
+  }
+
+  // FIDE
+  const fi = linked.fide;
+  document.getElementById('fi-status').textContent = fi ? 'Saved' : 'Not linked';
+  document.getElementById('fi-status').classList.toggle('ok', !!fi);
+  document.getElementById('fi-input').value = fi ? fi.id : '';
+  document.getElementById('fi-input').disabled = !!fi;
+  document.getElementById('fi-link-btn').style.display = fi ? 'none' : '';
+  document.getElementById('fi-unlink-btn').style.display = fi ? '' : 'none';
+  if (fi) {
+    document.getElementById('fi-details').innerHTML =
+      'FIDE ID: <b>' + escHtml(fi.id) + '</b><br>' +
+      '<a href="' + escHtml(fi.url) + '" target="_blank">View FIDE profile →</a>';
+  } else {
+    document.getElementById('fi-details').textContent = '';
+  }
+}
+
+function openLinkedAccounts() {
+  if (!getCurrentUser()) { openSignInModal('signin'); return; }
+  document.getElementById('linked-modal-overlay').style.display = 'flex';
+  renderLinkedAccounts();
+}
+function closeLinkedAccounts() {
+  document.getElementById('linked-modal-overlay').style.display = 'none';
+}
+
+function showLinkError(sectionId, msg) {
+  const detail = document.getElementById(sectionId + '-details');
+  detail.innerHTML = '<div class="linked-err">' + escHtml(msg) + '</div>';
+}
+
+async function handleLink(provider) {
+  const inputId = provider + '-input';
+  const linkBtn = document.getElementById(provider + '-link-btn');
+  const value = document.getElementById(inputId).value.trim();
+  if (!value) { showLinkError(provider, 'Please enter a value first.'); return; }
+  const originalText = linkBtn.textContent;
+  linkBtn.disabled = true;
+  linkBtn.textContent = '...';
+  try {
+    let data;
+    let key;
+    if (provider === 'cc') { data = await linkChessCom(value); key = 'chesscom'; }
+    else if (provider === 'li') { data = await linkLichess(value); key = 'lichess'; }
+    else if (provider === 'fi') { data = linkFide(value); key = 'fide'; }
+    const patch = { linked: {} };
+    patch.linked[key] = data;
+    updateLoggedInUser(patch);
+    renderLinkedAccounts();
+  } catch(e) {
+    showLinkError(provider, e.message || String(e));
+  } finally {
+    linkBtn.disabled = false;
+    linkBtn.textContent = originalText;
+  }
+}
+
+function handleUnlink(provider) {
+  const key = provider === 'cc' ? 'chesscom' : provider === 'li' ? 'lichess' : 'fide';
+  const user = getCurrentUser();
+  if (!user || !user.linked) return;
+  const linked = Object.assign({}, user.linked);
+  delete linked[key];
+  updateLoggedInUser({ linked: linked });
+  // Force rewrite (assign with object replaces missing keys cleanly)
+  const u2 = getCurrentUser();
+  u2.linked = linked;
+  setCurrentUser(u2);
+  renderLinkedAccounts();
+}
+
+// ── Google Sign-In ─────────────────────────────────
+function parseJwt(token) {
+  try {
+    const payload = token.split('.')[1];
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decodeURIComponent(escape(json)));
+  } catch(e) { return null; }
+}
+function onGoogleCredential(response) {
+  const data = parseJwt(response.credential);
+  if (!data) { showSignInError('Could not parse Google response.'); return; }
+  setCurrentUser({
+    id: 'google-' + data.sub,
+    name: data.name,
+    email: data.email,
+    pic: data.picture,
+    provider: 'google'
+  });
+  closeSignInModal();
+}
+function tryGoogleSignIn() {
+  if (!OAUTH_CONFIG.googleClientId) {
+    showSignInError('Google sign-in is not configured. Set OAUTH_CONFIG.googleClientId in the source, host on HTTPS, and authorize the domain in Google Cloud Console.');
+    return;
+  }
+  if (!window.google || !google.accounts || !google.accounts.id) {
+    showSignInError('Google sign-in library failed to load. Check your internet connection.');
+    return;
+  }
+  try {
+    google.accounts.id.initialize({
+      client_id: OAUTH_CONFIG.googleClientId,
+      callback: onGoogleCredential,
+      ux_mode: 'popup'
+    });
+    google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        showSignInError('Google sign-in prompt blocked. This typically happens on file:// or unauthorized origins. Host on HTTPS and authorize the domain.');
+      }
+    });
+  } catch(e) {
+    showSignInError('Google sign-in error: ' + (e.message || e));
+  }
+}
+
+// ── Facebook Login ─────────────────────────────────
+let fbSdkLoaded = false;
+function loadFacebookSdk() {
+  return new Promise((resolve, reject) => {
+    if (fbSdkLoaded && window.FB) { resolve(); return; }
+    if (document.getElementById('facebook-jssdk')) {
+      const wait = setInterval(() => {
+        if (window.FB) { clearInterval(wait); resolve(); }
+      }, 50);
+      setTimeout(() => { clearInterval(wait); reject(new Error('FB SDK timeout')); }, 8000);
+      return;
+    }
+    window.fbAsyncInit = function() {
+      FB.init({ appId: OAUTH_CONFIG.facebookAppId, cookie: true, xfbml: false, version: 'v18.0' });
+      fbSdkLoaded = true;
+      resolve();
+    };
+    const s = document.createElement('script');
+    s.id = 'facebook-jssdk';
+    s.src = 'https://connect.facebook.net/en_US/sdk.js';
+    s.async = true; s.defer = true; s.crossOrigin = 'anonymous';
+    s.onerror = () => reject(new Error('Failed to load Facebook SDK'));
+    document.body.appendChild(s);
+  });
+}
+async function tryFacebookSignIn() {
+  if (!OAUTH_CONFIG.facebookAppId) {
+    showSignInError('Facebook login is not configured. Set OAUTH_CONFIG.facebookAppId in the source, host on HTTPS, and authorize the domain in your Facebook App.');
+    return;
+  }
+  try {
+    await loadFacebookSdk();
+    FB.login(function(response) {
+      if (response.status !== 'connected') {
+        showSignInError('Facebook login was cancelled or failed.');
+        return;
+      }
+      FB.api('/me', { fields: 'id,name,email,picture' }, function(me) {
+        if (!me || me.error) { showSignInError('Could not read Facebook profile.'); return; }
+        setCurrentUser({
+          id: 'facebook-' + me.id,
+          name: me.name,
+          email: me.email || '',
+          pic: me.picture && me.picture.data ? me.picture.data.url : '',
+          provider: 'facebook'
+        });
+        closeSignInModal();
+      });
+    }, { scope: 'public_profile,email' });
+  } catch(e) {
+    showSignInError('Facebook SDK could not load (' + (e.message || e) + '). Likely cause: file:// origin, no internet, or unauthorized domain.');
+  }
+}
+
+// LocalStorage helpers
+const SIGNUPS_KEY = 'chessOTBSignups';
+function loadSignUps() {
+  try { return JSON.parse(localStorage.getItem(SIGNUPS_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function saveSignUps(s) {
+  try { localStorage.setItem(SIGNUPS_KEY, JSON.stringify(s)); } catch(e) {}
+}
+function isSignedUp(id) { return !!loadSignUps()[id]; }
+function setSignedUp(id, data) {
+  const s = loadSignUps();
+  s[id] = data;
+  saveSignUps(s);
+}
+function removeSignUp(id) {
+  const s = loadSignUps();
+  delete s[id];
+  saveSignUps(s);
+}
+
+// ── Distance (Haversine) ──────────────────────────
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 +
+    Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ── Formatting ────────────────────────────────────
+function fmtDateRange(start, end) {
+  const s = new Date(start), e = new Date(end);
+  const fmt = (d) => d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  if (s.toDateString() === e.toDateString()) return fmt(s);
+  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+    return s.toLocaleDateString('en-US', { month:'short', day:'numeric' }) +
+      '–' + e.getDate() + ', ' + e.getFullYear();
+  }
+  return fmt(s) + ' – ' + fmt(e);
+}
+function fmtMoney(amount, currency) {
+  if (amount === 0) return 'Free';
+  return new Intl.NumberFormat('en-US', { style:'currency', currency, maximumFractionDigits:0 }).format(amount);
+}
+function fmtDistance(km) {
+  const units = getPref('units', 'km');
+  if (units === 'mi') {
+    const mi = km * 0.621371;
+    if (mi < 1) return Math.round(mi * 5280) + ' ft';
+    if (mi < 100) return mi.toFixed(1) + ' mi';
+    return Math.round(mi) + ' mi';
+  }
+  if (km < 1) return Math.round(km*1000) + ' m';
+  if (km < 100) return km.toFixed(1) + ' km';
+  return Math.round(km) + ' km';
+}
+
+// ── Filtering ─────────────────────────────────────
+function applyFilters() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const dateFrom = document.getElementById('date-from').value;
+  const dateTo = document.getElementById('date-to').value;
+  const formats = Array.from(document.querySelectorAll('#format-filters input:checked')).map(c => c.value);
+  const sections = Array.from(document.querySelectorAll('#section-filters input:checked')).map(c => c.value);
+  const ratedRadio = document.querySelector('input[name="rated"]:checked').value;
+  const userRating = parseInt(document.getElementById('rating-input').value) || null;
+  const ratingEligibleOnly = document.getElementById('rating-eligible-only').checked;
+  const maxFee = parseInt(document.getElementById('fee-slider').value);
+  const freeOnly = document.getElementById('free-only').checked;
+  const maxDist = parseInt(document.getElementById('distance-slider').value);
+  const country = document.getElementById('country-filter').value;
+
+  filteredList = getAllTournaments().filter(t => {
+    // Search query
+    if (q) {
+      const hay = (t.name + ' ' + t.city + ' ' + t.country).toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    // Date
+    if (dateFrom && t.endDate < dateFrom) return false;
+    if (dateTo && t.startDate > dateTo) return false;
+    // Format
+    if (formats.length > 0 && formats.indexOf(t.format) === -1) return false;
+    // Section: match if any of tournament's sections is in selected set, or if "Open" is selected and tournament has Open-like sections
+    if (sections.length > 0) {
+      const sectionMatch = t.sections.some(ts => {
+        const tsLower = ts.toLowerCase();
+        return sections.some(sel => {
+          const sl = sel.toLowerCase();
+          if (sl === 'open') return tsLower.indexOf('open') >= 0 || /^[abc]$/i.test(tsLower) || tsLower.indexOf('master') >= 0 || tsLower.indexOf('amateur') >= 0 || tsLower.indexOf('challenger') >= 0 || tsLower.indexOf('u') === 0 || /elo</i.test(tsLower);
+          if (sl === 'women') return tsLower.indexOf('women') >= 0;
+          if (sl === 'junior') return tsLower.indexOf('junior') >= 0 || tsLower.indexOf('youth') >= 0 || tsLower.indexOf('u18') >= 0 || tsLower.indexOf('u16') >= 0 || tsLower.indexOf('u14') >= 0 || tsLower.indexOf('u12') >= 0 || tsLower.indexOf('u10') >= 0 || tsLower.indexOf('u8') >= 0 || tsLower.indexOf('future') >= 0;
+          if (sl === 'senior') return tsLower.indexOf('senior') >= 0 || tsLower.indexOf('50+') >= 0 || tsLower.indexOf('65+') >= 0;
+          if (sl === 'team') return tsLower.indexOf('team') >= 0;
+          return false;
+        });
+      });
+      if (!sectionMatch) return false;
+    }
+    // Rated
+    if (ratedRadio === 'rated' && !t.rated) return false;
+    if (ratedRadio === 'unrated' && t.rated) return false;
+    // Rating eligibility
+    if (ratingEligibleOnly && userRating !== null) {
+      if (t.ratingMin && userRating < t.ratingMin) return false;
+      if (t.ratingMax && userRating > t.ratingMax) return false;
+    }
+    // Fee (convert to USD for comparison)
+    const feeUSD = t.entryFee * (CURRENCY_RATES[t.currency] || 1);
+    if (freeOnly && t.entryFee > 0) return false;
+    if (maxFee < 500 && feeUSD > maxFee) return false;
+    // Distance
+    if (userLocation && maxDist < 20000) {
+      const d = haversine(userLocation.lat, userLocation.lon, t.lat, t.lon);
+      if (d > maxDist) return false;
+    }
+    // Country
+    if (country && t.country !== country) return false;
+    return true;
+  });
+
+  // Add distance if location known
+  if (userLocation) {
+    filteredList.forEach(t => {
+      t._distance = haversine(userLocation.lat, userLocation.lon, t.lat, t.lon);
+    });
+  } else {
+    filteredList.forEach(t => { t._distance = null; });
+  }
+
+  applySort();
+  render();
+}
+
+function applySort() {
+  const s = document.getElementById('sort-select').value;
+  filteredList.sort((a, b) => {
+    if (s === 'date') return a.startDate.localeCompare(b.startDate);
+    if (s === 'distance') {
+      if (a._distance === null && b._distance === null) return 0;
+      if (a._distance === null) return 1;
+      if (b._distance === null) return -1;
+      return a._distance - b._distance;
+    }
+    if (s === 'fee-low') {
+      return (a.entryFee * (CURRENCY_RATES[a.currency]||1)) - (b.entryFee * (CURRENCY_RATES[b.currency]||1));
+    }
+    if (s === 'fee-high') {
+      return (b.entryFee * (CURRENCY_RATES[b.currency]||1)) - (a.entryFee * (CURRENCY_RATES[a.currency]||1));
+    }
+    if (s === 'prize') return b.prizeFund - a.prizeFund;
+    if (s === 'name') return a.name.localeCompare(b.name);
+    return 0;
+  });
+}
+
+// ── Rendering ─────────────────────────────────────
+function render() {
+  document.getElementById('result-count').textContent = filteredList.length;
+  if (currentView === 'list') renderList();
+  else renderMap();
+}
+
+function renderList() {
+  const container = document.getElementById('view-list');
+  if (filteredList.length === 0) {
+    container.innerHTML = '<div class="empty-state"><h3>No tournaments match your filters</h3><p>Try widening your date range or clearing some filters.</p></div>';
+    return;
+  }
+  const html = filteredList.map(t => {
+    const dist = t._distance !== null ? '<span class="card-distance">📍 ' + fmtDistance(t._distance) + ' away</span>' : '';
+    const signedUp = isSignedUp(t.id) ? '<span class="card-distance" style="background:#e0f3e0;color:#1a661a;">✓ Signed up</span>' : '';
+    const tagClass = 'tag-' + t.format.toLowerCase();
+    const publishedTag = t.published ? '<span class="tag tag-published">Local Event</span>' : '';
+    const removeBtn = t.published ? '<button class="card-remove" data-remove-id="' + t.id + '" title="Remove this imported event">&times;</button>' : '';
+    return '<div class="tournament-card" data-id="' + t.id + '">' +
+      '<div class="card-top">' +
+        '<div class="card-title">' + escHtml(t.name) + '</div>' +
+        '<div style="display:flex;gap:6px;align-items:center;">' + (signedUp || dist) + removeBtn + '</div>' +
+      '</div>' +
+      '<div class="card-meta">' +
+        '<span><span class="meta-icon">📅</span>' + fmtDateRange(t.startDate, t.endDate) + '</span>' +
+        '<span><span class="meta-icon">📍</span>' + escHtml(t.city) + ', ' + escHtml(t.country) + '</span>' +
+        '<span><span class="meta-icon">💰</span>' + fmtMoney(t.entryFee, t.currency) + '</span>' +
+        (t.prizeFund ? '<span><span class="meta-icon">🏆</span>' + fmtMoney(t.prizeFund, t.currency) + ' prize fund</span>' : '') +
+      '</div>' +
+      '<div class="card-tags">' +
+        publishedTag +
+        '<span class="tag ' + tagClass + '">' + t.format + '</span>' +
+        (t.rated ? '<span class="tag tag-rated">FIDE-rated</span>' : '<span class="tag">Unrated</span>') +
+        t.sections.slice(0, 3).map(s => '<span class="tag">' + escHtml(s) + '</span>').join('') +
+        (t.sections.length > 3 ? '<span class="tag">+' + (t.sections.length - 3) + ' more</span>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+  container.innerHTML = html;
+  Array.from(container.querySelectorAll('.tournament-card')).forEach(card => {
+    card.addEventListener('click', e => {
+      // Skip card click if remove button was clicked
+      if (e.target.classList.contains('card-remove')) return;
+      openDetail(card.getAttribute('data-id'));
+    });
+  });
+  Array.from(container.querySelectorAll('.card-remove')).forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-remove-id');
+      if (confirm('Remove this imported tournament from your list?')) {
+        const pub = loadPublished().filter(t => t.id !== id);
+        savePublished(pub);
+        removeSignUp(id);
+        populateCountries();
+        applyFilters();
+      }
+    });
+  });
+}
+
+function renderMap() {
+  if (!map) {
+    map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 18
+    }).addTo(map);
+  }
+  // Force resize when first shown
+  setTimeout(() => map.invalidateSize(), 50);
+  // Clear existing markers
+  mapMarkers.forEach(m => map.removeLayer(m));
+  mapMarkers = [];
+  // Add user location marker
+  if (userLocation) {
+    const userIcon = L.divIcon({
+      html: '<div style="background:#2c5f8d;border:3px solid #fff;width:20px;height:20px;border-radius:50%;box-shadow:0 0 0 3px rgba(44,95,141,0.3);"></div>',
+      className: '', iconSize: [20,20], iconAnchor: [10,10]
+    });
+    const userMarker = L.marker([userLocation.lat, userLocation.lon], { icon: userIcon })
+      .bindPopup('<b>You are here</b>').addTo(map);
+    mapMarkers.push(userMarker);
+  }
+  // Add tournament markers
+  filteredList.forEach(t => {
+    const signed = isSignedUp(t.id);
+    const color = signed ? '#1a661a' : '#c8a430';
+    const icon = L.divIcon({
+      html: '<div style="background:' + color + ';border:2px solid #fff;width:14px;height:14px;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>',
+      className: '', iconSize: [14,14], iconAnchor: [7,7]
+    });
+    const marker = L.marker([t.lat, t.lon], { icon })
+      .bindPopup(
+        '<div class="popup-title">' + escHtml(t.name) + '</div>' +
+        '<div class="popup-meta">' + escHtml(t.city) + ', ' + escHtml(t.country) + '<br>' +
+          fmtDateRange(t.startDate, t.endDate) + '<br>' +
+          fmtMoney(t.entryFee, t.currency) + (t.prizeFund ? ' · ' + fmtMoney(t.prizeFund, t.currency) + ' prize' : '') +
+        '</div>' +
+        '<button class="popup-btn" onclick="openDetail(\'' + t.id + '\')">View details</button>'
+      )
+      .addTo(map);
+    mapMarkers.push(marker);
+  });
+  // Fit bounds
+  if (filteredList.length > 0) {
+    const bounds = L.latLngBounds(filteredList.map(t => [t.lat, t.lon]));
+    if (userLocation) bounds.extend([userLocation.lat, userLocation.lon]);
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 8 });
+  }
+}
+
+function escHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+// ── Detail modal ──────────────────────────────────
+function openDetail(id) {
+  const t = getAllTournaments().find(x => x.id === id);
+  if (!t) return;
+  selectedTournamentId = id;
+  document.getElementById('modal-title').textContent = t.name;
+  document.getElementById('modal-location').textContent = t.city + ', ' + t.country;
+  const detailsHtml = [
+    ['Dates', fmtDateRange(t.startDate, t.endDate)],
+    ['Format', t.format],
+    ['Time control', t.timeControl],
+    ['Entry fee', fmtMoney(t.entryFee, t.currency)],
+    ['Prize fund', t.prizeFund ? fmtMoney(t.prizeFund, t.currency) : '—'],
+    ['Rounds', t.rounds],
+    ['Sections', t.sections.join(', ')],
+    ['Rating type', t.rated ? 'FIDE-rated' : 'Unrated'],
+    t.ratingMin ? ['Min rating', t.ratingMin] : null,
+    t.ratingMax ? ['Max rating', t.ratingMax] : null,
+    t._distance !== null ? ['Distance', fmtDistance(t._distance)] : null
+  ].filter(x => x !== null);
+  document.getElementById('modal-details').innerHTML = detailsHtml.map(([k,v]) =>
+    '<div class="detail-item"><div class="detail-label">' + k + '</div><div class="detail-value">' + escHtml(String(v)) + '</div></div>'
+  ).join('');
+  document.getElementById('modal-desc').textContent = t.description;
+  document.getElementById('modal-website').onclick = () => window.open(t.website, '_blank');
+  // Populate sign-up sections dropdown
+  const sectionSel = document.getElementById('signup-section');
+  sectionSel.innerHTML = t.sections.map(s => '<option value="' + escHtml(s) + '">' + escHtml(s) + '</option>').join('');
+  // Sign-up state
+  refreshSignupState(t);
+  document.getElementById('signup-form').classList.remove('open');
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeDetail() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  selectedTournamentId = null;
+}
+function refreshSignupState(t) {
+  const statusEl = document.getElementById('signup-status-display');
+  const signupBtn = document.getElementById('modal-signup');
+  if (isSignedUp(t.id)) {
+    const data = loadSignUps()[t.id];
+    statusEl.innerHTML = '<span class="signup-status">✓ Signed up' + (data.section ? ' (' + escHtml(data.section) + ')' : '') + '</span>';
+    signupBtn.textContent = 'Cancel sign-up';
+    signupBtn.classList.add('btn-ghost');
+    signupBtn.classList.remove('btn-secondary');
+  } else {
+    statusEl.innerHTML = '';
+    signupBtn.textContent = 'Sign Up';
+    signupBtn.classList.remove('btn-ghost');
+  }
+}
+
+// ── Geolocation ──────────────────────────────────
+function useMyLocation() {
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported in this browser.');
+    return;
+  }
+  const btn = document.getElementById('use-location');
+  btn.textContent = '📍 Finding…';
+  btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      btn.textContent = '📍 Location set';
+      btn.disabled = false;
+      document.getElementById('sort-select').value = 'distance';
+      applyFilters();
+    },
+    err => {
+      btn.textContent = '📍 Near me';
+      btn.disabled = false;
+      alert('Could not get location: ' + (err.message || 'permission denied'));
+    },
+    { timeout: 10000 }
+  );
+}
+
+// ── Populate countries ──────────────────────────
+function populateCountries() {
+  const sel = document.getElementById('country-filter');
+  // Reset (keeps the "Any country" placeholder)
+  while (sel.options.length > 1) sel.remove(1);
+  const countries = Array.from(new Set(getAllTournaments().map(t => t.country))).sort();
+  countries.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    sel.appendChild(opt);
+  });
+}
+
+// ── Event wiring ─────────────────────────────────
+document.getElementById('search').addEventListener('input', applyFilters);
+document.getElementById('date-from').addEventListener('change', applyFilters);
+document.getElementById('date-to').addEventListener('change', applyFilters);
+document.querySelectorAll('#format-filters input, #section-filters input, input[name="rated"], #rating-eligible-only, #free-only')
+  .forEach(el => el.addEventListener('change', applyFilters));
+document.getElementById('rating-input').addEventListener('input', applyFilters);
+document.getElementById('country-filter').addEventListener('change', applyFilters);
+document.getElementById('sort-select').addEventListener('change', () => { applySort(); render(); });
+
+const distanceSlider = document.getElementById('distance-slider');
+const distanceValue = document.getElementById('distance-value');
+distanceSlider.addEventListener('input', () => {
+  const v = parseInt(distanceSlider.value);
+  distanceValue.textContent = v >= 20000 ? 'Any' : v + ' km';
+  applyFilters();
+});
+
+const feeSlider = document.getElementById('fee-slider');
+const feeValue = document.getElementById('fee-value');
+feeSlider.addEventListener('input', () => {
+  const v = parseInt(feeSlider.value);
+  feeValue.textContent = v >= 500 ? 'Any' : '≤ $' + v;
+  applyFilters();
+});
+
+document.getElementById('reset-filters').addEventListener('click', () => {
+  document.getElementById('search').value = '';
+  document.getElementById('date-from').value = '';
+  document.getElementById('date-to').value = '';
+  document.querySelectorAll('#format-filters input, #section-filters input').forEach(c => c.checked = true);
+  document.querySelector('input[name="rated"][value="any"]').checked = true;
+  document.getElementById('rating-input').value = '';
+  document.getElementById('rating-eligible-only').checked = false;
+  document.getElementById('fee-slider').value = 500;
+  document.getElementById('free-only').checked = false;
+  document.getElementById('distance-slider').value = 20000;
+  document.getElementById('country-filter').value = '';
+  distanceValue.textContent = 'Any';
+  feeValue.textContent = 'Any';
+  applyFilters();
+});
+
+document.getElementById('use-location').addEventListener('click', useMyLocation);
+
+// ── Import flow ──────────────────────────────────
+function showImport() {
+  document.getElementById('import-textarea').value = '';
+  document.getElementById('import-error').style.display = 'none';
+  document.getElementById('import-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('import-textarea').focus(), 50);
+}
+function hideImport() {
+  document.getElementById('import-overlay').classList.remove('open');
+}
+function showImportError(msg) {
+  const el = document.getElementById('import-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function importTournamentJson(text) {
+  let parsed;
+  try { parsed = JSON.parse(text); } catch(e) { showImportError('Invalid JSON: ' + e.message); return false; }
+  // Accept either a single object or an array
+  const items = Array.isArray(parsed) ? parsed : [parsed];
+  const required = ['name','city','country','startDate','endDate','format'];
+  const errs = [];
+  items.forEach((t, i) => {
+    required.forEach(r => { if (!t[r]) errs.push('Item ' + (i+1) + ' missing "' + r + '"'); });
+  });
+  if (errs.length) { showImportError(errs.join('; ')); return false; }
+  const pub = loadPublished();
+  let added = 0, replaced = 0;
+  items.forEach(t => {
+    if (!t.id) t.id = 'tm-' + (t.name||'tournament').toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,24) + '-' + Date.now().toString(36);
+    if (typeof t.lat !== 'number') t.lat = parseFloat(t.lat) || 0;
+    if (typeof t.lon !== 'number') t.lon = parseFloat(t.lon) || 0;
+    if (typeof t.entryFee !== 'number') t.entryFee = parseInt(t.entryFee) || 0;
+    if (typeof t.prizeFund !== 'number') t.prizeFund = parseInt(t.prizeFund) || 0;
+    if (typeof t.rounds !== 'number') t.rounds = parseInt(t.rounds) || 5;
+    if (!Array.isArray(t.sections)) t.sections = t.sections ? String(t.sections).split(/,\s*/) : ['Open'];
+    if (typeof t.rated !== 'boolean') t.rated = String(t.rated) !== 'false';
+    if (!t.currency) t.currency = 'EUR';
+    if (!t.timeControl) t.timeControl = 'Standard';
+    if (!t.description) t.description = 'Tournament published via Tournament Manager.';
+    t.published = true;
+    const existing = pub.findIndex(x => x.id === t.id);
+    if (existing >= 0) { pub[existing] = t; replaced++; }
+    else { pub.push(t); added++; }
+  });
+  savePublished(pub);
+  hideImport();
+  populateCountries();
+  applyFilters();
+  alert('✓ ' + (added > 0 ? added + ' tournament' + (added===1?'':'s') + ' imported. ' : '') +
+        (replaced > 0 ? replaced + ' updated.' : ''));
+  return true;
+}
+
+// ── Account UI wiring ─────────────────────────────
+document.getElementById('account-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  const menu = document.getElementById('account-menu');
+  if (menu.classList.contains('open')) { closeAccountMenu(); return; }
+  openAccountMenu();
+});
+document.addEventListener('click', e => {
+  const menu = document.getElementById('account-menu');
+  const btn = document.getElementById('account-btn');
+  if (menu.classList.contains('open') && !menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+    closeAccountMenu();
+  }
+});
+document.getElementById('signin-close').addEventListener('click', closeSignInModal);
+document.getElementById('signin-modal-overlay').addEventListener('click', e => {
+  if (e.target.id === 'signin-modal-overlay') closeSignInModal();
+});
+document.getElementById('signin-toggle-link').addEventListener('click', () => {
+  openSignInModal(signinMode === 'signup' ? 'signin' : 'signup');
+});
+document.getElementById('signin-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('signin-email').value.trim();
+  const password = document.getElementById('signin-password').value;
+  if (signinMode === 'signup') {
+    const name = document.getElementById('signin-name').value.trim();
+    const rating = parseInt(document.getElementById('signin-rating').value) || null;
+    if (!name) { showSignInError('Please enter your name.'); return; }
+    await emailSignUp(name, email, password, rating);
+  } else {
+    await emailSignIn(email, password);
+  }
+});
+document.getElementById('google-signin-btn').addEventListener('click', tryGoogleSignIn);
+document.getElementById('facebook-signin-btn').addEventListener('click', tryFacebookSignIn);
+
+// Account settings modal wiring
+document.getElementById('settings-close').addEventListener('click', closeAccountSettings);
+document.getElementById('settings-modal-overlay').addEventListener('click', e => {
+  if (e.target.id === 'settings-modal-overlay') closeAccountSettings();
+});
+document.getElementById('settings-save-profile').addEventListener('click', saveProfileChanges);
+document.getElementById('settings-change-pw').addEventListener('click', changePassword);
+document.getElementById('settings-save-prefs').addEventListener('click', savePreferences);
+document.getElementById('settings-delete-account').addEventListener('click', deleteAccount);
+
+// Linked-accounts modal wiring
+document.getElementById('linked-close').addEventListener('click', closeLinkedAccounts);
+document.getElementById('linked-modal-overlay').addEventListener('click', e => {
+  if (e.target.id === 'linked-modal-overlay') closeLinkedAccounts();
+});
+document.getElementById('cc-link-btn').addEventListener('click', () => handleLink('cc'));
+document.getElementById('li-link-btn').addEventListener('click', () => handleLink('li'));
+document.getElementById('fi-link-btn').addEventListener('click', () => handleLink('fi'));
+document.getElementById('cc-unlink-btn').addEventListener('click', () => handleUnlink('cc'));
+document.getElementById('li-unlink-btn').addEventListener('click', () => handleUnlink('li'));
+document.getElementById('fi-unlink-btn').addEventListener('click', () => handleUnlink('fi'));
+// Enter key submits the link form
+['cc','li','fi'].forEach(p => {
+  document.getElementById(p + '-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter' || e.keyCode === 13) {
+      if (!document.getElementById(p + '-input').disabled) handleLink(p);
+    }
+  });
+});
+
+document.getElementById('import-btn').addEventListener('click', showImport);
+document.getElementById('import-close').addEventListener('click', hideImport);
+document.getElementById('import-cancel').addEventListener('click', hideImport);
+document.getElementById('import-overlay').addEventListener('click', e => {
+  if (e.target.id === 'import-overlay') hideImport();
+});
+document.getElementById('import-submit').addEventListener('click', () => {
+  const text = document.getElementById('import-textarea').value.trim();
+  if (!text) { showImportError('Paste tournament JSON first.'); return; }
+  importTournamentJson(text);
+});
+document.getElementById('import-paste').addEventListener('click', async () => {
+  if (navigator.clipboard && navigator.clipboard.readText) {
+    try {
+      const t = await navigator.clipboard.readText();
+      document.getElementById('import-textarea').value = t || '';
+      document.getElementById('import-error').style.display = 'none';
+    } catch(e) {
+      showImportError('Clipboard access denied. Please paste manually (long-press → Paste).');
+    }
+  } else {
+    showImportError('Clipboard API unavailable. Please paste manually.');
+  }
+});
+
+document.getElementById('return-clock').addEventListener('click', function() {
+  // Prefer going back if we got here via internal navigation (so clock state stays in BFCache)
+  if (window.history.length > 1 && document.referrer && document.referrer.indexOf('index.html') >= 0) {
+    window.history.back();
+  } else {
+    window.location.href = 'index.html';
+  }
+});
+
+document.querySelectorAll('.view-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentView = tab.getAttribute('data-view');
+    document.getElementById('view-list').style.display = currentView === 'list' ? '' : 'none';
+    document.getElementById('view-map').style.display = currentView === 'map' ? '' : 'none';
+    render();
+  });
+});
+
+// Modal
+document.getElementById('modal-close').addEventListener('click', closeDetail);
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target.id === 'modal-overlay') closeDetail();
+});
+document.getElementById('modal-signup').addEventListener('click', () => {
+  if (!selectedTournamentId) return;
+  if (isSignedUp(selectedTournamentId)) {
+    if (confirm('Cancel your sign-up for this tournament?')) {
+      removeSignUp(selectedTournamentId);
+      const t = getAllTournaments().find(x => x.id === selectedTournamentId);
+      refreshSignupState(t);
+      render();
+    }
+  } else {
+    // If not logged in, prompt to sign in first
+    const user = getCurrentUser();
+    if (!user) {
+      if (confirm('You need an account to sign up for tournaments. Sign in now?')) {
+        openSignInModal('signin');
+      }
+      return;
+    }
+    // Pre-fill with the logged-in user's info
+    document.getElementById('signup-name').value = user.name || '';
+    document.getElementById('signup-rating').value = user.rating || '';
+    document.getElementById('signup-email').value = user.email || '';
+    document.getElementById('signup-form').classList.add('open');
+    document.getElementById('signup-name').focus();
+  }
+});
+document.getElementById('signup-cancel').addEventListener('click', () => {
+  document.getElementById('signup-form').classList.remove('open');
+});
+document.getElementById('signup-submit').addEventListener('click', () => {
+  const name = document.getElementById('signup-name').value.trim();
+  const rating = document.getElementById('signup-rating').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const section = document.getElementById('signup-section').value;
+  if (!name) { alert('Please enter your name.'); return; }
+  if (!email || email.indexOf('@') < 0) { alert('Please enter a valid email.'); return; }
+  setSignedUp(selectedTournamentId, { name, rating, email, section, signedAt: new Date().toISOString() });
+  const t = TOURNAMENTS.find(x => x.id === selectedTournamentId);
+  document.getElementById('signup-form').classList.remove('open');
+  refreshSignupState(t);
+  render();
+  alert('✓ Signed up for ' + t.name + '!\n\nA confirmation has been recorded locally. The organiser would normally email you at ' + email + '.');
+});
+
+// Mobile filter drawer
+document.getElementById('mobile-filter-btn').addEventListener('click', () => {
+  document.getElementById('filters-panel').classList.add('open');
+  document.getElementById('filter-overlay').classList.add('open');
+});
+document.getElementById('filter-overlay').addEventListener('click', () => {
+  document.getElementById('filters-panel').classList.remove('open');
+  document.getElementById('filter-overlay').classList.remove('open');
+});
+document.getElementById('filters-panel').addEventListener('click', e => {
+  // close-x is the ::before — detect click in top-right area
+  if (e.target === document.getElementById('filters-panel')) return;
+  // The ::before pseudo-element click is on the panel itself in the top-right; detect via offset
+});
+// Tap close on panel (the ::before close button isn't directly clickable; use a real button via toggle on outside tap)
+
+// Init
+populateCountries();
+renderAccountUI();
+// Apply saved preferences
+(function() {
+  const prefs = loadPrefs();
+  if (prefs.sort) document.getElementById('sort-select').value = prefs.sort;
+  if (prefs.onlyEligible) document.getElementById('rating-eligible-only').checked = true;
+})();
+// Default date: today onward
+const today = new Date().toISOString().slice(0, 10);
+document.getElementById('date-from').value = today;
+applyFilters();
+</script>
+</body>
+</html>
